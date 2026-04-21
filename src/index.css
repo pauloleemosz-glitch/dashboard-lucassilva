@@ -95,10 +95,15 @@
     font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
     font-weight: 300;
     background:
-      radial-gradient(ellipse at top left, hsl(186 100% 50% / 0.08), transparent 50%),
-      radial-gradient(ellipse at bottom right, hsl(277 100% 65% / 0.08), transparent 50%),
+      radial-gradient(ellipse at 20% 10%, hsl(186 100% 50% / 0.18), transparent 55%),
+      radial-gradient(ellipse at 80% 90%, hsl(277 100% 65% / 0.18), transparent 55%),
+      radial-gradient(ellipse at 60% 40%, hsl(18 100% 60% / 0.10), transparent 60%),
       hsl(var(--background));
+    background-attachment: fixed;
+    background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+    animation: bg-drift 18s ease-in-out infinite;
     min-height: 100vh;
+    position: relative;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -180,30 +185,26 @@
   50% { filter: drop-shadow(0 0 16px hsl(var(--neon-cyan) / 0.6)); }
 }
 @keyframes bg-drift {
-  0% { background-position: 0% 50%, 100% 50%; }
-  50% { background-position: 100% 50%, 0% 50%; }
-  100% { background-position: 0% 50%, 100% 50%; }
+  0%   { background-position: 0% 0%, 100% 100%, 50% 50%, 0 0; }
+  50%  { background-position: 100% 100%, 0% 0%, 60% 40%, 0 0; }
+  100% { background-position: 0% 0%, 100% 100%, 50% 50%, 0 0; }
 }
 @keyframes grid-pan {
-  0% { background-position: 0 0; }
-  100% { background-position: 60px 60px; }
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 60px 60px, 60px 60px; }
 }
 @keyframes scan-line {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 0.6; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  0%   { transform: translateY(-20vh); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(120vh); opacity: 0; }
 }
 @keyframes gradient-text {
   0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  50%      { background-position: 100% 50%; }
 }
 
-body {
-  background-size: 200% 200%, 200% 200%, 100% 100%;
-  animation: bg-drift 30s ease-in-out infinite;
-}
-
-/* Animated grid overlay */
+/* Animated grid overlay — fixed to viewport, above bg, below content */
 body::before {
   content: "";
   position: fixed;
@@ -211,11 +212,12 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(hsl(var(--neon-cyan) / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--neon-cyan) / 0.04) 1px, transparent 1px);
-  background-size: 60px 60px;
-  animation: grid-pan 40s linear infinite;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    linear-gradient(hsl(var(--neon-cyan) / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--neon-cyan) / 0.07) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px;
+  animation: grid-pan 20s linear infinite;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 85%);
 }
 
 /* Slow scanning line */
@@ -224,11 +226,17 @@ body::after {
   position: fixed;
   left: 0;
   right: 0;
-  height: 120px;
+  top: 0;
+  height: 160px;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(180deg, transparent, hsl(var(--neon-cyan) / 0.06), transparent);
-  animation: scan-line 12s linear infinite;
+  background: linear-gradient(180deg,
+    transparent,
+    hsl(var(--neon-cyan) / 0.10),
+    hsl(var(--neon-purple) / 0.06),
+    transparent
+  );
+  animation: scan-line 8s linear infinite;
 }
 
 #root { position: relative; z-index: 1; }
