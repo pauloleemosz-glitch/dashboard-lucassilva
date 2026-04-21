@@ -46,7 +46,7 @@ export function ConversionFunnel({ cliques, visitas, compras, valorCompra, check
         animate={inView ? "show" : "hidden"}
         variants={{
           hidden: {},
-          show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+          show: { transition: { staggerChildren: 0.2, delayChildren: 0.1 } },
         }}
       >
         {stages.map((s, i) => {
@@ -62,7 +62,7 @@ export function ConversionFunnel({ cliques, visitas, compras, valorCompra, check
                   y: 0,
                   scaleY: 1,
                   filter: "blur(0px)",
-                  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+                  transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] },
                 },
               }}
               style={{ transformOrigin: "top" }}

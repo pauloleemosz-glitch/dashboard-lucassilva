@@ -21,7 +21,7 @@ interface RevealProps {
 export function Reveal({
   children,
   delay = 0,
-  duration = 0.6,
+  duration = 1.2,
   direction = "up",
   distance = 24,
   className,

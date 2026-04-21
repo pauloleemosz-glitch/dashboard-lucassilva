@@ -61,7 +61,7 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
       ref={ref}
       initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
       animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(6px)" }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 1.2, delay, ease: [0.22, 1, 0.36, 1] }}
       className="glass-card rounded-xl p-5 relative overflow-hidden group hover:border-primary/40 transition-colors"
     >
       <div
