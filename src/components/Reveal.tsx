@@ -25,7 +25,7 @@ export function Reveal({
   direction = "up",
   distance = 24,
   className,
-  once = true,
+  once = false,
   amount = 0.15,
 }: RevealProps) {
   const reduced = useReducedMotion();
@@ -79,7 +79,7 @@ export function RevealGroup({
   stagger = 0.08,
   delayChildren = 0,
   amount = 0.15,
-  once = true,
+  once = false,
 }: {
   children: ReactNode;
   className?: string;
