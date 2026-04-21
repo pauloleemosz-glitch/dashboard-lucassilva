@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 
-export type Modo = "perpetuo" | "lancamento";
+export type Modo = "perpetuo" | "lead" | "geral";
 
 interface FilterCtx {
   dateRange: DateRange | undefined;

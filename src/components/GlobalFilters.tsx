@@ -106,9 +106,9 @@ export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching, minD
         </SelectContent>
       </Select>
 
-      {/* Toggle Perpétuo / Lançamento */}
+      {/* Toggle Perpétuo / Lead / Geral */}
       <div className="inline-flex items-center rounded-md border border-primary/30 p-0.5">
-        {(["perpetuo", "lancamento"] as const).map((m) => (
+        {(["perpetuo", "lead", "geral"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setModo(m)}
@@ -120,7 +120,7 @@ export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching, minD
             )}
             style={modo === m ? { boxShadow: "0 0 12px hsl(var(--neon-cyan) / 0.4)" } : undefined}
           >
-            {m === "perpetuo" ? "Perpétuo" : "Lançamento"}
+            {m === "perpetuo" ? "Perpétuo" : m === "lead" ? "Lead" : "Geral"}
           </button>
         ))}
       </div>
