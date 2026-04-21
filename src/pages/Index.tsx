@@ -209,10 +209,34 @@ function Dashboard() {
       />
 
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-xl skeleton-shimmer" />
-          ))}
+        <div className="space-y-5 animate-fade-in">
+          {/* KPI skeletons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="glass-card rounded-xl p-5 h-28 relative overflow-hidden"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="h-3 w-20 rounded skeleton-shimmer mb-4" />
+                <div className="h-7 w-28 rounded skeleton-shimmer mb-3" />
+                <div className="h-2 w-16 rounded skeleton-shimmer" />
+              </div>
+            ))}
+          </div>
+          {/* Charts + funnel skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="glass-card rounded-xl h-64 skeleton-shimmer" />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="glass-card rounded-xl h-56 skeleton-shimmer" />
+                <div className="glass-card rounded-xl h-56 skeleton-shimmer" />
+              </div>
+            </div>
+            <div className="glass-card rounded-xl h-[30rem] skeleton-shimmer" />
+          </div>
+          {/* Table skeleton */}
+          <div className="glass-card rounded-xl h-72 skeleton-shimmer" />
         </div>
       ) : (
         <>
