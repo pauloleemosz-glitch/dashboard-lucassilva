@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, RefreshCw } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -13,10 +13,26 @@ interface Props {
   lastUpdated?: Date | null;
   onRefresh: () => void;
   isFetching: boolean;
+  minDate?: Date | null;
+  maxDate?: Date | null;
 }
 
-export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching }: Props) {
+export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
   const { dateRange, setDateRange, curso, setCurso, modo, setModo } = useFilters();
+
+  const today = maxDate ? endOfDay(maxDate) : endOfDay(new Date());
+  const todayStart = maxDate ? startOfDay(maxDate) : startOfDay(new Date());
+
+  const presets: { label: string; range: () => DateRange }[] = [
+    { label: "Hoje", range: () => ({ from: todayStart, to: today }) },
+    { label: "Ontem", range: () => ({ from: startOfDay(subDays(todayStart, 1)), to: endOfDay(subDays(todayStart, 1)) }) },
+    { label: "Últimos 7 dias", range: () => ({ from: startOfDay(subDays(todayStart, 6)), to: today }) },
+    { label: "Últimos 14 dias", range: () => ({ from: startOfDay(subDays(todayStart, 13)), to: today }) },
+    { label: "Últimos 30 dias", range: () => ({ from: startOfDay(subDays(todayStart, 29)), to: today }) },
+    { label: "Este mês", range: () => ({ from: startOfMonth(todayStart), to: today }) },
+    { label: "Mês passado", range: () => ({ from: startOfMonth(subMonths(todayStart, 1)), to: endOfMonth(subMonths(todayStart, 1)) }) },
+    { label: "Todo o período", range: () => ({ from: minDate ?? startOfDay(subDays(todayStart, 365)), to: today }) },
+  ];
 
   return (
     <div className="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3">
@@ -45,14 +61,28 @@ export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching }: Pr
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 glass-card border-primary/30" align="start">
-          <Calendar
-            mode="range"
-            selected={dateRange}
-            onSelect={(r) => setDateRange(r as DateRange | undefined)}
-            numberOfMonths={2}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
+          <div className="flex">
+            <div className="flex flex-col gap-1 p-2 border-r border-primary/20 min-w-[150px]">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground px-2 py-1">Atalhos</span>
+              {presets.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => setDateRange(p.range())}
+                  className="text-left text-xs px-2 py-1.5 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors text-muted-foreground"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={(r) => setDateRange(r as DateRange | undefined)}
+              numberOfMonths={2}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </div>
           <div className="p-2 border-t border-primary/20">
             <button onClick={() => setDateRange(undefined)} className="text-xs text-muted-foreground hover:text-neon-cyan w-full text-center py-1">
               Limpar

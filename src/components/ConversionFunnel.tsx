@@ -8,16 +8,23 @@ interface Props {
   compras: number;
   valorCompra: number;
   checkout: number;
+  leads?: number;
+  showLeads?: boolean;
 }
 
-export function ConversionFunnel({ cliques, visitas, compras, valorCompra, checkout }: Props) {
-  const max = Math.max(cliques, visitas, compras, 1);
-  const stages = [
-    { label: "Cliques", value: cliques, prev: null as number | null, color: "hsl(var(--neon-purple))", display: formatNumber(cliques) },
+export function ConversionFunnel({ cliques, visitas, compras, valorCompra, checkout, leads = 0, showLeads = false }: Props) {
+  const max = Math.max(cliques, visitas, compras, leads, 1);
+  const stages: Array<{ label: string; value: number; prev: number | null; color: string; display: string; isCurrency?: boolean }> = [
+    { label: "Cliques", value: cliques, prev: null, color: "hsl(var(--neon-purple))", display: formatNumber(cliques) },
     { label: "Visitou Site", value: visitas, prev: cliques, color: "hsl(var(--neon-magenta))", display: formatNumber(visitas) },
-    { label: "Compra", value: compras, prev: visitas, color: "hsl(var(--neon-orange))", display: formatNumber(compras) },
-    { label: "Valor de Compra", value: valorCompra, prev: null as number | null, color: "hsl(var(--neon-gold))", display: formatBRL(valorCompra), isCurrency: true },
   ];
+  if (showLeads) {
+    stages.push({ label: "Leads", value: leads, prev: visitas, color: "hsl(var(--neon-cyan))", display: formatNumber(leads) });
+    stages.push({ label: "Compra", value: compras, prev: leads, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
+  } else {
+    stages.push({ label: "Compra", value: compras, prev: visitas, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
+  }
+  stages.push({ label: "Valor de Compra", value: valorCompra, prev: null, color: "hsl(var(--neon-gold))", display: formatBRL(valorCompra), isCurrency: true });
 
   return (
     <div className="glass-card rounded-xl p-5 h-full">

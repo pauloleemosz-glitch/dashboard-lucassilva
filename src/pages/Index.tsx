@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus } from "lucide-react";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
@@ -10,6 +10,8 @@ import { CreativeTable } from "@/components/CreativeTable";
 import { InvestmentClicks } from "@/components/Charts/InvestmentClicks";
 import { ReachFrequency } from "@/components/Charts/ReachFrequency";
 import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
+import { LeadsSpendCPA } from "@/components/Charts/LeadsSpendCPA";
+import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
@@ -103,16 +105,18 @@ function Dashboard() {
 
   // Daily series
   const daily = useMemo(() => {
-    const map = new Map<string, { date: string; raw: Date; spend: number; clicks: number; impressions: number; reach: number; purchases: number }>();
+    const map = new Map<string, { date: string; raw: Date; spend: number; clicks: number; impressions: number; reach: number; purchases: number; leads: number; lpViews: number }>();
     for (const r of filtered) {
       if (!r.date) continue;
       const k = format(r.date, "yyyy-MM-dd");
-      const e = map.get(k) || { date: format(r.date, "dd/MM"), raw: r.date, spend: 0, clicks: 0, impressions: 0, reach: 0, purchases: 0 };
+      const e = map.get(k) || { date: format(r.date, "dd/MM"), raw: r.date, spend: 0, clicks: 0, impressions: 0, reach: 0, purchases: 0, leads: 0, lpViews: 0 };
       e.spend += r.spend;
       e.clicks += r.clicks;
       e.impressions += r.impressions;
       e.reach += r.reach;
       e.purchases += r.compras;
+      e.leads += r.leads;
+      e.lpViews += r.landingPageViews;
       map.set(k, e);
     }
     return Array.from(map.values()).sort((a, b) => a.raw.getTime() - b.raw.getTime());
@@ -129,6 +133,18 @@ function Dashboard() {
     spend: Number(d.spend.toFixed(2)),
     purchases: d.purchases,
     cpa: d.purchases > 0 ? Number((d.spend / d.purchases).toFixed(2)) : null,
+  }));
+  const leadsSpendData = daily.map((d) => ({
+    date: d.date,
+    spend: Number(d.spend.toFixed(2)),
+    leads: d.leads,
+    cpl: d.leads > 0 ? Number((d.spend / d.leads).toFixed(2)) : null,
+  }));
+  const lpClicksLeadsData = daily.map((d) => ({
+    date: d.date,
+    lpViews: d.lpViews,
+    clicks: d.clicks,
+    leads: d.leads,
   }));
 
   if (error) {
@@ -169,6 +185,8 @@ function Dashboard() {
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
         onRefresh={() => refetch()}
         isFetching={isFetching}
+        minDate={minDate}
+        maxDate={maxDate}
       />
 
       {isLoading ? (
@@ -184,7 +202,11 @@ function Dashboard() {
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
             <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />
-            <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
+            {modo === "lancamento" ? (
+              <KPICard label="Leads" value={agg.leads} variation={variacaoPct(agg.leads, prevAgg.leads)} icon={UserPlus} color="orange" delay={0.15} />
+            ) : (
+              <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
+            )}
             <KPICard label="CPC" value={cpcCurrent} variation={variacaoPct(cpcCurrent, cpcPrev)} icon={MousePointer} color="purple" format={(v) => formatBRL(v)} delay={0.2} />
             <KPICard label="CPM" value={cpmCurrent} variation={variacaoPct(cpmCurrent, cpmPrev)} icon={BarChart3} color="cyan" format={(v) => formatBRL(v)} delay={0.25} />
             <KPICard label="CTR" value={ctrCurrent} variation={variacaoPct(ctrCurrent, ctrPrev)} icon={Percent} color="gold" format={(v) => formatPct(v)} delay={0.3} />
@@ -205,8 +227,13 @@ function Dashboard() {
               <InvestmentClicks data={investClicksData} />
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <ReachFrequency data={reachFreqData} />
-                <SpendPurchasesCPA data={spendPurchData} />
+                {modo === "lancamento" ? (
+                  <LeadsSpendCPA data={leadsSpendData} />
+                ) : (
+                  <SpendPurchasesCPA data={spendPurchData} />
+                )}
               </div>
+              {modo === "lancamento" && <LPViewsClicksLeads data={lpClicksLeadsData} />}
             </div>
             <div className="lg:col-span-1">
               <ConversionFunnel
@@ -215,6 +242,8 @@ function Dashboard() {
                 compras={agg.compras}
                 valorCompra={agg.valorCompra}
                 checkout={agg.valorCheckout}
+                leads={agg.leads}
+                showLeads={modo === "lancamento"}
               />
             </div>
           </div>
