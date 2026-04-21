@@ -15,6 +15,7 @@ import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
+import logo from "@/assets/logo.svg";
 
 function aggregate(rows: AdRow[]) {
   return rows.reduce(
@@ -178,18 +179,20 @@ function Dashboard() {
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-5">
       {/* Header */}
-      <motion.header initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex items-center justify-between flex-wrap gap-3">
+      <motion.header initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-light tracking-tight">
-            <span className="neon-text-cyan">META</span>
-            <span className="text-muted-foreground mx-2">//</span>
-            <span className="neon-text-purple">ADS</span>
-            <span className="text-muted-foreground"> dashboard</span>
+          <h1 className="text-2xl md:text-3xl font-light tracking-tight gradient-text-anim">
+            META // ADS dashboard
           </h1>
-          <p className="text-xs text-muted-foreground mt-1 tracking-wider uppercase">
-            Performance em tempo real · auto-refresh 5min
-          </p>
         </div>
+        <motion.img
+          src={logo}
+          alt="LS Certificações"
+          className="h-10 md:h-12 w-auto float-soft glow-breathe"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        />
       </motion.header>
 
       {/* Filters */}
