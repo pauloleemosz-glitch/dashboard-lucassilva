@@ -36,7 +36,7 @@ function aggregate(rows: AdRow[]) {
 
 function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
-  const { dateRange, setDateRange, curso, modo } = useFilters();
+  const { dateRange, setDateRange, curso, setCurso, modo } = useFilters();
 
   const allRows = data ?? [];
 
@@ -63,9 +63,22 @@ function Dashboard() {
 
   const cursos = useMemo(() => {
     const set = new Set<string>();
-    for (const r of allRows) if (r.curso) set.add(r.curso);
+    for (const r of allRows) {
+      if (!r.curso) continue;
+      // Apenas cursos com dados no período selecionado
+      if (dateRange?.from && r.date && r.date < dateRange.from) continue;
+      if (dateRange?.to && r.date && r.date > dateRange.to) continue;
+      set.add(r.curso);
+    }
     return Array.from(set).sort();
-  }, [allRows]);
+  }, [allRows, dateRange]);
+
+  // Se o curso atualmente selecionado sumir do período, volta para "all"
+  useEffect(() => {
+    if (curso !== "all" && cursos.length > 0 && !cursos.includes(curso)) {
+      setCurso("all");
+    }
+  }, [cursos, curso, setCurso]);
 
   // Filtering
   const filtered = useMemo(() => {
