@@ -7,6 +7,7 @@ import { GlobalFilters } from "@/components/GlobalFilters";
 import { KPICard } from "@/components/KPICard";
 import { ConversionFunnel } from "@/components/ConversionFunnel";
 import { MatrixBackground } from "@/components/MatrixBackground";
+import { Reveal } from "@/components/Reveal";
 import { CreativeTable } from "@/components/CreativeTable";
 import { InvestmentClicks } from "@/components/Charts/InvestmentClicks";
 import { ReachFrequency } from "@/components/Charts/ReachFrequency";
@@ -247,44 +248,64 @@ function Dashboard() {
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
-              <InvestmentClicks data={investClicksData} />
+              <Reveal direction="up" delay={0.05}>
+                <InvestmentClicks data={investClicksData} />
+              </Reveal>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <ReachFrequency data={reachFreqData} />
-                {modo === "lead" ? (
-                  <LeadsSpendCPA data={leadsSpendData} />
-                ) : (
-                  <SpendPurchasesCPA data={spendPurchData} />
-                )}
+                <Reveal direction="left">
+                  <ReachFrequency data={reachFreqData} />
+                </Reveal>
+                <Reveal direction="right" delay={0.1}>
+                  {modo === "lead" ? (
+                    <LeadsSpendCPA data={leadsSpendData} />
+                  ) : (
+                    <SpendPurchasesCPA data={spendPurchData} />
+                  )}
+                </Reveal>
               </div>
-              {modo === "lead" && <LPViewsClicksLeads data={lpClicksLeadsData} />}
+              {modo === "lead" && (
+                <Reveal direction="up">
+                  <LPViewsClicksLeads data={lpClicksLeadsData} />
+                </Reveal>
+              )}
               {modo === "geral" && (
                 <>
-                  <LeadsSpendCPA data={leadsSpendData} />
-                  <LPViewsClicksLeads data={lpClicksLeadsData} />
+                  <Reveal direction="up">
+                    <LeadsSpendCPA data={leadsSpendData} />
+                  </Reveal>
+                  <Reveal direction="up" delay={0.1}>
+                    <LPViewsClicksLeads data={lpClicksLeadsData} />
+                  </Reveal>
                 </>
               )}
             </div>
             <div className="lg:col-span-1">
-              <ConversionFunnel
-                cliques={agg.clicks}
-                visitas={agg.landingPageViews}
-                compras={agg.compras}
-                valorCompra={agg.valorCompra}
-                checkout={agg.valorCheckout}
-                leads={agg.leads}
-                showLeads={modo === "lead" || modo === "geral"}
-              />
+              <Reveal direction="left" delay={0.15}>
+                <ConversionFunnel
+                  cliques={agg.clicks}
+                  visitas={agg.landingPageViews}
+                  compras={agg.compras}
+                  valorCompra={agg.valorCompra}
+                  checkout={agg.valorCheckout}
+                  leads={agg.leads}
+                  showLeads={modo === "lead" || modo === "geral"}
+                />
+              </Reveal>
             </div>
           </div>
 
           {/* Creatives table */}
-          <CreativeTable rows={filtered} />
+          <Reveal direction="up" amount={0.1}>
+            <CreativeTable rows={filtered} />
+          </Reveal>
 
           {/* Footer */}
-          <div className="text-center text-[10px] text-muted-foreground pt-4 tracking-widest uppercase">
-            <TrendingUp className="inline h-3 w-3 mr-1 text-neon-cyan" />
-            {filtered.length.toLocaleString("pt-BR")} registros · {formatNumber(agg.impressions)} impressões totais
-          </div>
+          <Reveal direction="up">
+            <div className="text-center text-[10px] text-muted-foreground pt-4 tracking-widest uppercase">
+              <TrendingUp className="inline h-3 w-3 mr-1 text-neon-cyan" />
+              {filtered.length.toLocaleString("pt-BR")} registros · {formatNumber(agg.impressions)} impressões totais
+            </div>
+          </Reveal>
         </>
       )}
     </div>
