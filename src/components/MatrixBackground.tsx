@@ -64,7 +64,7 @@ export function MatrixBackground() {
       const h = canvas.clientHeight;
 
       // Trail fade — keep low alpha for subtle, ghosted effect
-      ctx.fillStyle = "hsla(220, 60%, 5%, 0.10)";
+      ctx.fillStyle = "hsla(220, 60%, 5%, 0.08)";
       ctx.fillRect(0, 0, w, h);
 
       ctx.font = `${fontSize}px "Space Grotesk", monospace`;
@@ -76,7 +76,9 @@ export function MatrixBackground() {
 
         const color = tints[i] === 1 ? purple : cyan;
         // Bright leading char
-        ctx.fillStyle = `hsla(${color.replace(/%/g, "%")}, 0.55)`;
+        ctx.shadowColor = `hsl(${color})`;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = `hsla(${color}, 0.95)`;
         ctx.fillText(ch, x, y);
 
         // Reset when off-screen
@@ -86,6 +88,7 @@ export function MatrixBackground() {
         }
         drops[i] += speeds[i];
       }
+      ctx.shadowBlur = 0;
     };
 
     raf = requestAnimationFrame(draw);
@@ -100,8 +103,8 @@ export function MatrixBackground() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0"
-      style={{ opacity: 0.35, mixBlendMode: "screen" }}
+      className="pointer-events-none fixed inset-0"
+      style={{ zIndex: 0, opacity: 0.85 }}
     />
   );
 }
