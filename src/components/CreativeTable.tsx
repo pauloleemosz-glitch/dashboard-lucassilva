@@ -185,13 +185,17 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
                     )}
                   </td>
                   <td className="py-2 px-2 max-w-[220px]">
-                    <div className="truncate text-foreground">{r.adName}</div>
+                    <a
+                      href={`https://drive.google.com/file/d/${encodeURIComponent(r.adName)}/view`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 truncate text-foreground hover:text-neon-cyan transition-colors"
+                      title={r.adName}
+                    >
+                      <span className="truncate">{r.adName}</span>
+                      <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
+                    </a>
                     <div className="truncate text-[10px] text-muted-foreground">{r.campaign}</div>
-                    {r.link && (
-                      <a href={r.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-neon-cyan hover:underline">
-                        Abrir <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
                   </td>
                   {cols.map((c) => {
                     const v = r[c.key];
