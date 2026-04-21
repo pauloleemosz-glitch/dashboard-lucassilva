@@ -170,6 +170,94 @@
   100% { background-position: -200% 0; }
 }
 
+/* Ambient subtle animations — always on, non-distracting */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes glow-breathe {
+  0%, 100% { filter: drop-shadow(0 0 8px hsl(var(--neon-cyan) / 0.35)); }
+  50% { filter: drop-shadow(0 0 16px hsl(var(--neon-cyan) / 0.6)); }
+}
+@keyframes bg-drift {
+  0% { background-position: 0% 50%, 100% 50%; }
+  50% { background-position: 100% 50%, 0% 50%; }
+  100% { background-position: 0% 50%, 100% 50%; }
+}
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+@keyframes scan-line {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+@keyframes gradient-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+body {
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+  animation: bg-drift 30s ease-in-out infinite;
+}
+
+/* Animated grid overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(hsl(var(--neon-cyan) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--neon-cyan) / 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: grid-pan 40s linear infinite;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* Slow scanning line */
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 120px;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(180deg, transparent, hsl(var(--neon-cyan) / 0.06), transparent);
+  animation: scan-line 12s linear infinite;
+}
+
+#root { position: relative; z-index: 1; }
+
+.float-soft { animation: float-soft 6s ease-in-out infinite; }
+.glow-breathe { animation: glow-breathe 4s ease-in-out infinite; }
+
+.gradient-text-anim {
+  background: linear-gradient(90deg,
+    hsl(var(--neon-cyan)),
+    hsl(var(--neon-purple)),
+    hsl(var(--neon-orange)),
+    hsl(var(--neon-cyan))
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-text 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, body::before, body::after,
+  .float-soft, .glow-breathe, .gradient-text-anim,
+  .neon-border-pulse, .skeleton-shimmer {
+    animation: none !important;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
