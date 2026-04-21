@@ -1,6 +1,6 @@
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 import { LucideIcon, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -27,14 +27,24 @@ const glowMap = {
 };
 
 export function KPICard({ label, value, variation, icon: Icon, color = "cyan", format, delay = 0 }: Props) {
-  const mv = useMotionValue(0);
-  const display = useTransform(mv, (v) => (format ? format(v) : v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })));
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { amount: 0.3 });
 
+  const mv = useMotionValue(0);
+  const display = useTransform(mv, (v) =>
+    format ? format(v) : v.toLocaleString("pt-BR", { maximumFractionDigits: 0 }),
+  );
+
+  // Counter syncs with viewport entry — resets when leaving so it re-runs on scroll back
   useEffect(() => {
     if (value === null || !Number.isFinite(value)) return;
+    if (!inView) {
+      mv.set(0);
+      return;
+    }
     const controls = animate(mv, value, { duration: 1.4, delay, ease: "easeOut" });
     return () => controls.stop();
-  }, [value, delay, mv]);
+  }, [value, delay, mv, inView]);
 
   const variationDisplay = (() => {
     if (variation === null || variation === undefined || !Number.isFinite(variation)) {
@@ -48,9 +58,10 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
+      ref={ref}
+      initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+      animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(6px)" }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className="glass-card rounded-xl p-5 relative overflow-hidden group hover:border-primary/40 transition-colors"
     >
       <div

@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { taxaConversao } from "@/utils/metrics";
 
@@ -26,8 +27,11 @@ export function ConversionFunnel({ cliques, visitas, compras, valorCompra, check
   }
   stages.push({ label: "Valor de Compra", value: valorCompra, prev: null, color: "hsl(var(--neon-gold))", display: formatBRL(valorCompra), isCurrency: true });
 
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { amount: 0.2 });
+
   return (
-    <div className="glass-card rounded-xl p-5 h-full">
+    <div ref={ref} className="glass-card rounded-xl p-5 h-full">
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Funil de Conversão</h3>
         <div className="text-right">
@@ -36,16 +40,31 @@ export function ConversionFunnel({ cliques, visitas, compras, valorCompra, check
         </div>
       </div>
 
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial="hidden"
+        animate={inView ? "show" : "hidden"}
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+        }}
+      >
         {stages.map((s, i) => {
           const widthPct = s.isCurrency ? 60 : Math.max(20, ((s.value || 0) / max) * 100);
           const conv = s.prev !== null ? taxaConversao(s.value, s.prev) : null;
           return (
             <motion.div
               key={s.label}
-              initial={{ opacity: 0, scaleY: 0 }}
-              animate={{ opacity: 1, scaleY: 1 }}
-              transition={{ duration: 0.5, delay: i * 0.15, ease: "easeOut" }}
+              variants={{
+                hidden: { opacity: 0, y: 12, scaleY: 0.6, filter: "blur(6px)" },
+                show: {
+                  opacity: 1,
+                  y: 0,
+                  scaleY: 1,
+                  filter: "blur(0px)",
+                  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+                },
+              }}
               style={{ transformOrigin: "top" }}
               className="relative"
             >
@@ -82,7 +101,7 @@ export function ConversionFunnel({ cliques, visitas, compras, valorCompra, check
             </div>
           );
         })()}
-      </div>
+      </motion.div>
     </div>
   );
 }
