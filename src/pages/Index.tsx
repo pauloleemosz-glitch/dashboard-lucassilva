@@ -93,8 +93,8 @@ function Dashboard() {
   const agg = aggregate(filtered);
   const prevAgg = aggregate(previousFiltered);
 
-  const cpaCurrent = modo === "perpetuo" ? cpaPerpetuo(agg.spend, agg.compras) : cpaLancamento(agg.spend, agg.leads);
-  const cpaPrev = modo === "perpetuo" ? cpaPerpetuo(prevAgg.spend, prevAgg.compras) : cpaLancamento(prevAgg.spend, prevAgg.leads);
+  const cpaCurrent = modo === "lead" ? cpaLancamento(agg.spend, agg.leads) : cpaPerpetuo(agg.spend, agg.compras);
+  const cpaPrev = modo === "lead" ? cpaLancamento(prevAgg.spend, prevAgg.leads) : cpaPerpetuo(prevAgg.spend, prevAgg.compras);
 
   const ctrCurrent = ctr(agg.clicks, agg.impressions);
   const ctrPrev = ctr(prevAgg.clicks, prevAgg.impressions);
@@ -202,8 +202,13 @@ function Dashboard() {
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
             <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />
-            {modo === "lancamento" ? (
+            {modo === "lead" ? (
               <KPICard label="Leads" value={agg.leads} variation={variacaoPct(agg.leads, prevAgg.leads)} icon={UserPlus} color="orange" delay={0.15} />
+            ) : modo === "geral" ? (
+              <>
+                <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
+                <KPICard label="Leads" value={agg.leads} variation={variacaoPct(agg.leads, prevAgg.leads)} icon={UserPlus} color="gold" delay={0.18} />
+              </>
             ) : (
               <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
             )}
@@ -211,7 +216,7 @@ function Dashboard() {
             <KPICard label="CPM" value={cpmCurrent} variation={variacaoPct(cpmCurrent, cpmPrev)} icon={BarChart3} color="cyan" format={(v) => formatBRL(v)} delay={0.25} />
             <KPICard label="CTR" value={ctrCurrent} variation={variacaoPct(ctrCurrent, ctrPrev)} icon={Percent} color="gold" format={(v) => formatPct(v)} delay={0.3} />
             <KPICard
-              label={modo === "perpetuo" ? "CPA (Perpétuo)" : "CPA (Lançamento)"}
+              label={modo === "lead" ? "CPA (Lead)" : modo === "geral" ? "CPA (Venda)" : "CPA (Perpétuo)"}
               value={cpaCurrent}
               variation={variacaoPct(cpaCurrent, cpaPrev)}
               icon={Target}
@@ -227,13 +232,19 @@ function Dashboard() {
               <InvestmentClicks data={investClicksData} />
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <ReachFrequency data={reachFreqData} />
-                {modo === "lancamento" ? (
+                {modo === "lead" ? (
                   <LeadsSpendCPA data={leadsSpendData} />
                 ) : (
                   <SpendPurchasesCPA data={spendPurchData} />
                 )}
               </div>
-              {modo === "lancamento" && <LPViewsClicksLeads data={lpClicksLeadsData} />}
+              {modo === "lead" && <LPViewsClicksLeads data={lpClicksLeadsData} />}
+              {modo === "geral" && (
+                <>
+                  <LeadsSpendCPA data={leadsSpendData} />
+                  <LPViewsClicksLeads data={lpClicksLeadsData} />
+                </>
+              )}
             </div>
             <div className="lg:col-span-1">
               <ConversionFunnel
@@ -243,7 +254,7 @@ function Dashboard() {
                 valorCompra={agg.valorCompra}
                 checkout={agg.valorCheckout}
                 leads={agg.leads}
-                showLeads={modo === "lancamento"}
+                showLeads={modo === "lead" || modo === "geral"}
               />
             </div>
           </div>
