@@ -1,0 +1,107 @@
+import { useEffect, useRef } from "react";
+
+/**
+ * Subtle Matrix-style falling characters background.
+ * Uses semantic neon colors from the design system.
+ * Respects prefers-reduced-motion.
+ */
+export function MatrixBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Read neon-cyan from CSS variables for theming
+    const styles = getComputedStyle(document.documentElement);
+    const cyan = styles.getPropertyValue("--neon-cyan").trim() || "186 100% 50%";
+    const purple = styles.getPropertyValue("--neon-purple").trim() || "277 100% 65%";
+
+    const fontSize = 14;
+    let columns = 0;
+    let drops: number[] = [];
+    let speeds: number[] = [];
+    let tints: number[] = []; // 0 = cyan, 1 = purple
+
+    const chars =
+      "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF";
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      columns = Math.floor(w / fontSize);
+      drops = Array.from({ length: columns }, () => Math.random() * -50);
+      speeds = Array.from({ length: columns }, () => 0.3 + Math.random() * 0.5);
+      tints = Array.from({ length: columns }, () => (Math.random() < 0.15 ? 1 : 0));
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    let raf = 0;
+    let last = 0;
+    const targetFps = 24;
+    const interval = 1000 / targetFps;
+
+    const draw = (t: number) => {
+      raf = requestAnimationFrame(draw);
+      if (t - last < interval) return;
+      last = t;
+
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      // Trail fade — keep low alpha for subtle, ghosted effect
+      ctx.fillStyle = "hsla(220, 60%, 5%, 0.10)";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.font = `${fontSize}px "Space Grotesk", monospace`;
+
+      for (let i = 0; i < columns; i++) {
+        const ch = chars.charAt(Math.floor(Math.random() * chars.length));
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        const color = tints[i] === 1 ? purple : cyan;
+        // Bright leading char
+        ctx.fillStyle = `hsla(${color.replace(/%/g, "%")}, 0.55)`;
+        ctx.fillText(ch, x, y);
+
+        // Reset when off-screen
+        if (y > h && Math.random() > 0.975) {
+          drops[i] = Math.random() * -20;
+          tints[i] = Math.random() < 0.15 ? 1 : 0;
+        }
+        drops[i] += speeds[i];
+      }
+    };
+
+    raf = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-0"
+      style={{ opacity: 0.35, mixBlendMode: "screen" }}
+    />
+  );
+}

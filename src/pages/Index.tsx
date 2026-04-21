@@ -6,6 +6,7 @@ import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
 import { KPICard } from "@/components/KPICard";
 import { ConversionFunnel } from "@/components/ConversionFunnel";
+import { MatrixBackground } from "@/components/MatrixBackground";
 import { CreativeTable } from "@/components/CreativeTable";
 import { InvestmentClicks } from "@/components/Charts/InvestmentClicks";
 import { ReachFrequency } from "@/components/Charts/ReachFrequency";
