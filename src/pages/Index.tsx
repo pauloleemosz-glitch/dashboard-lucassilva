@@ -14,6 +14,7 @@ import { ReachFrequency } from "@/components/Charts/ReachFrequency";
 import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
 import { LeadsSpendCPA } from "@/components/Charts/LeadsSpendCPA";
 import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
+import { ProductSharePie } from "@/components/Charts/ProductSharePie";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
@@ -31,9 +32,10 @@ function aggregate(rows: AdRow[]) {
       acc.landingPageViews += r.landingPageViews;
       acc.valorCompra += r.valorCompra;
       acc.valorCheckout += r.valorCheckout;
+      acc.initiateCheckout += r.initiateCheckout;
       return acc;
     },
-    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0 },
+    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0 },
   );
 }
 
