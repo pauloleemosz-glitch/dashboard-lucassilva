@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink, ChevronsRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { AdRow } from "@/hooks/useSheetData";
 import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn } from "@/utils/metrics";
