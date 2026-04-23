@@ -165,6 +165,21 @@ function Dashboard() {
     leads: d.leads,
   }));
 
+  // Product share (sales count + leads count) by curso
+  const { salesShare, leadsShare } = useMemo(() => {
+    const sMap = new Map<string, number>();
+    const lMap = new Map<string, number>();
+    for (const r of filtered) {
+      const k = r.curso || "Sem categoria";
+      sMap.set(k, (sMap.get(k) || 0) + r.compras);
+      lMap.set(k, (lMap.get(k) || 0) + r.leads);
+    }
+    return {
+      salesShare: Array.from(sMap, ([name, value]) => ({ name, value })),
+      leadsShare: Array.from(lMap, ([name, value]) => ({ name, value })),
+    };
+  }, [filtered]);
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -312,12 +327,22 @@ function Dashboard() {
                   visitas={agg.landingPageViews}
                   compras={agg.compras}
                   valorCompra={agg.valorCompra}
-                  checkout={agg.valorCheckout}
+                  checkout={agg.initiateCheckout}
                   leads={agg.leads}
                   showLeads={modo === "lead" || modo === "geral"}
                 />
               </Reveal>
             </div>
+          </div>
+
+          {/* Product share pies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Reveal direction="left">
+              <ProductSharePie title="Participação dos Produtos · Vendas" data={salesShare} />
+            </Reveal>
+            <Reveal direction="right" delay={0.1}>
+              <ProductSharePie title="Participação dos Produtos · Leads" data={leadsShare} delay={0.05} />
+            </Reveal>
           </div>
 
           {/* Creatives table */}
