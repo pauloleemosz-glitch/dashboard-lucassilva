@@ -83,7 +83,7 @@ export function MatrixBackground() {
         // Reset when off-screen
         if (y > h && Math.random() > 0.975) {
           drops[i] = Math.random() * -20;
-          tints[i] = Math.random() < 0.15 ? 1 : 0;
+          tints[i] = Math.random() < 0.2 ? 1 : 0;
         }
         drops[i] += speeds[i];
       }
