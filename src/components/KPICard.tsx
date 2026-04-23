@@ -75,7 +75,7 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
       {value === null ? (
         <div className="text-3xl text-muted-foreground">—</div>
       ) : (
-        <motion.div className={cn("text-3xl font-light tracking-tight", colorMap[color])}>{display}</motion.div>
+        <motion.div className={cn("text-2xl sm:text-3xl font-light tracking-tight break-all leading-tight", colorMap[color])}>{display}</motion.div>
       )}
       <div className={cn("flex items-center gap-1 mt-2 text-xs", variationDisplay.cls)}>
         <VIcon className="h-3 w-3" />
