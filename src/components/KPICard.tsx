@@ -73,7 +73,7 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
         <Icon className={cn("h-4 w-4", colorMap[color])} style={{ filter: `drop-shadow(0 0 6px ${glowMap[color]})` }} />
       </div>
       {value === null ? (
-        <div className="text-3xl text-muted-foreground">—</div>
+        <div className="text-2xl sm:text-3xl text-muted-foreground">—</div>
       ) : (
         <motion.div className={cn("text-2xl sm:text-3xl font-light tracking-tight break-all leading-tight", colorMap[color])}>{display}</motion.div>
       )}
