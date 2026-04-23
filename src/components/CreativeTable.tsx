@@ -133,12 +133,30 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
       transition={{ duration: 0.6, delay: 0.4 }}
       className="glass-card rounded-xl p-5"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Criativos</h3>
-        <span className="text-xs text-muted-foreground">{sorted.length} anúncios</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-neon-cyan/80 lg:hidden">
+            <ChevronsRight className="h-3 w-3 animate-pulse" />
+            Deslize para ver mais
+          </span>
+          <span className="text-xs text-muted-foreground">{sorted.length} anúncios</span>
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="relative">
+        <div className="lg:hidden absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-10 bg-gradient-to-l from-background to-transparent" />
+        <div className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <motion.div
+            animate={{ x: [0, 6, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="rounded-full bg-neon-cyan/20 border border-neon-cyan/50 p-1.5 backdrop-blur-sm"
+            style={{ boxShadow: "0 0 12px hsl(var(--neon-cyan) / 0.5)" }}
+          >
+            <ChevronsRight className="h-3.5 w-3.5 text-neon-cyan" />
+          </motion.div>
+        </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-primary/20">
