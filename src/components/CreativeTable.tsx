@@ -266,6 +266,7 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {totalPages > 1 && (
