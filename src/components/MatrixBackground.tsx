@@ -73,11 +73,11 @@ export function MatrixBackground() {
         const x = i * fontSize;
         const y = drops[i] * fontSize;
 
-        const color = tints[i] === 1 ? purple : cyan;
+        const color = tints[i] === 1 ? greenBright : green;
         // Bright leading char
         ctx.shadowColor = `hsl(${color})`;
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = `hsla(${color}, 0.95)`;
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = `hsla(${color}, 1)`;
         ctx.fillText(ch, x, y);
 
         // Reset when off-screen
