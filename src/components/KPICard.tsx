@@ -78,7 +78,7 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
         <motion.div
           className={cn(
             "font-light tracking-tight leading-tight tabular-nums whitespace-nowrap overflow-hidden text-ellipsis",
-            "text-[clamp(1.05rem,5.2vw,1.875rem)] sm:text-3xl",
+            "text-[clamp(0.85rem,4.2vw,1.875rem)] sm:text-3xl",
             colorMap[color],
           )}
           title={typeof value === "number" ? value.toString() : undefined}
