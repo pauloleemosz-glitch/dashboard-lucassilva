@@ -33,11 +33,13 @@ function aggregate(rows: AdRow[]): AggRow[] {
     const key = r.adName;
     const existing = map.get(key);
     if (!existing) {
+      // Convention: ad name itself is used as the Drive file id
+      const driveId = extractDriveId(r.link) || r.adName;
       map.set(key, {
         adName: r.adName,
         curso: r.curso || "—",
         link: r.link,
-        driveId: extractDriveId(r.link),
+        driveId,
         leads: r.leads,
         impressions: r.impressions,
         videoPlays3s: r.videoPlays3s,
