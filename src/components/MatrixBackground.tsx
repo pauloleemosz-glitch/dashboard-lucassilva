@@ -18,16 +18,15 @@ export function MatrixBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Read neon-cyan from CSS variables for theming
-    const styles = getComputedStyle(document.documentElement);
-    const cyan = styles.getPropertyValue("--neon-cyan").trim() || "186 100% 50%";
-    const purple = styles.getPropertyValue("--neon-purple").trim() || "277 100% 65%";
+    // Vivid neon green — classic Matrix look
+    const green = "135 100% 55%";
+    const greenBright = "120 100% 70%";
 
     const fontSize = 14;
     let columns = 0;
     let drops: number[] = [];
     let speeds: number[] = [];
-    let tints: number[] = []; // 0 = cyan, 1 = purple
+    let tints: number[] = []; // 0 = green, 1 = bright green leader
 
     const chars =
       "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF";
