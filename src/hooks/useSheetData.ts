@@ -24,6 +24,7 @@ export interface AdRow {
   videoPlays95: number;
   valorCompra: number;
   valorCheckout: number;
+  initiateCheckout: number;
   landingPageViews: number;
   compraLP: number;
   valorCompraLP: number;
@@ -71,6 +72,7 @@ async function fetchSheet(): Promise<AdRow[]> {
         videoPlays95: num("Reproduções de 95% do vídeo"),
         valorCompra: num("Valor de conversão da compra"),
         valorCheckout: num("Valor de conversão de finalizações de compra iniciadas"),
+        initiateCheckout: num("Initiate Checkout"),
         landingPageViews: num("Visualizações da página de destino"),
         compraLP: num("Compra LP1108 - v3"),
         valorCompraLP: num("Valor de conversão de Compra LP1108 - v3"),
