@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ImageOff, ExternalLink } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { AdRow } from "@/hooks/useSheetData";
 import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 interface AggRow {
   adName: string;
-  campaign: string;
+  curso: string;
   link?: string;
   driveId?: string | null;
   leads: number;
@@ -24,7 +25,7 @@ interface AggRow {
   valorConversao: number;
 }
 
-type SortKey = keyof Omit<AggRow, "link" | "driveId" | "campaign">;
+type SortKey = keyof Omit<AggRow, "link" | "driveId" | "curso">;
 
 function aggregate(rows: AdRow[]): AggRow[] {
   const map = new Map<string, AggRow>();
@@ -32,9 +33,13 @@ function aggregate(rows: AdRow[]): AggRow[] {
     const key = r.adName;
     const existing = map.get(key);
     if (!existing) {
+      // Convention: ad name itself is used as the Drive file id
+      const driveId = extractDriveId(r.link) || r.adName;
       map.set(key, {
         adName: r.adName,
-        campaign: r.campaign,
+        curso: r.curso || "—",
+        link: r.link,
+        driveId,
         leads: r.leads,
         impressions: r.impressions,
         videoPlays3s: r.videoPlays3s,
@@ -138,8 +143,7 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
           <thead>
             <tr className="border-b border-primary/20">
               <th className="text-left py-2 px-2 text-muted-foreground font-light">#</th>
-              <th className="text-left py-2 px-2 text-muted-foreground font-light">Thumb</th>
-              <th className="text-left py-2 px-2 text-muted-foreground font-light min-w-[180px]">Anúncio</th>
+              <th className="text-left py-2 px-2 text-muted-foreground font-light min-w-[200px]">Anúncio</th>
               {cols.map((c) => (
                 <th key={c.key} className="text-right py-2 px-2 text-muted-foreground font-light whitespace-nowrap">
                   <button onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 hover:text-neon-cyan transition-colors">
@@ -153,14 +157,15 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
           <tbody>
             {pageData.length === 0 && (
               <tr>
-                <td colSpan={cols.length + 3} className="text-center text-muted-foreground py-8">
+                <td colSpan={cols.length + 2} className="text-center text-muted-foreground py-8">
                   Nenhum criativo encontrado
                 </td>
               </tr>
             )}
             {pageData.map((r, idx) => {
               const isTop = r.valorConversao > 0 && r.valorConversao === maxValor;
-              const driveId = r.driveId || extractDriveId(r.link);
+              const driveId = r.driveId;
+              const driveHref = driveId ? `https://drive.google.com/file/d/${driveId}/view` : r.link;
               return (
                 <tr
                   key={r.adName + idx}
@@ -170,32 +175,65 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
                   )}
                 >
                   <td className="py-2 px-2 text-muted-foreground">{page * PAGE_SIZE + idx + 1}</td>
-                  <td className="py-2 px-2">
-                    {driveId ? (
-                      <img
-                        src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w80`}
-                        alt=""
-                        className="w-10 h-10 object-cover rounded border border-primary/30"
-                        onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded border border-primary/20 bg-muted/40 flex items-center justify-center">
-                        <ImageOff className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-2 px-2 max-w-[220px]">
-                    <a
-                      href={`https://drive.google.com/file/d/${encodeURIComponent(r.adName)}/view`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 truncate text-foreground hover:text-neon-cyan transition-colors"
-                      title={r.adName}
-                    >
-                      <span className="truncate">{r.adName}</span>
-                      <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
-                    </a>
-                    <div className="truncate text-[10px] text-muted-foreground">{r.campaign}</div>
+                  <td className="py-2 px-2 max-w-[260px]">
+                    <HoverCard openDelay={150} closeDelay={80}>
+                      <HoverCardTrigger asChild>
+                        {driveHref ? (
+                          <a
+                            href={driveHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 max-w-full truncate text-foreground hover:text-neon-cyan transition-colors"
+                            title={r.adName}
+                          >
+                            <span className="truncate">{r.adName}</span>
+                            <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />
+                          </a>
+                        ) : (
+                          <span className="truncate text-foreground" title={r.adName}>{r.adName}</span>
+                        )}
+                      </HoverCardTrigger>
+                      {driveId && (
+                        <HoverCardContent
+                          side="right"
+                          align="start"
+                          className="p-2 w-[280px] bg-[hsl(220_60%_6%/0.95)] border border-neon-cyan/40 backdrop-blur-md"
+                          style={{ boxShadow: "0 0 24px hsl(var(--neon-cyan) / 0.25)" }}
+                        >
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 truncate">
+                            {r.adName}
+                          </div>
+                          <div className="rounded overflow-hidden border border-primary/30 bg-muted/40 aspect-video flex items-center justify-center">
+                            <img
+                              src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w400`}
+                              alt={r.adName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                img.style.display = "none";
+                                const fallback = img.parentElement?.querySelector("[data-fallback]") as HTMLElement | null;
+                                if (fallback) fallback.style.display = "flex";
+                              }}
+                            />
+                            <div
+                              data-fallback
+                              className="hidden w-full h-full items-center justify-center text-[10px] text-muted-foreground"
+                            >
+                              Prévia indisponível
+                            </div>
+                          </div>
+                          <a
+                            href={driveHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex items-center gap-1 text-[10px] text-neon-cyan hover:underline"
+                          >
+                            Abrir no Drive <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </HoverCardContent>
+                      )}
+                    </HoverCard>
+                    <div className="truncate text-[10px] text-neon-cyan/70 uppercase tracking-wider">{r.curso}</div>
                   </td>
                   {cols.map((c) => {
                     const v = r[c.key];

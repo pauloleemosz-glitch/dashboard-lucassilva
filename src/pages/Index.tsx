@@ -14,6 +14,7 @@ import { ReachFrequency } from "@/components/Charts/ReachFrequency";
 import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
 import { LeadsSpendCPA } from "@/components/Charts/LeadsSpendCPA";
 import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
+import { ProductSharePie } from "@/components/Charts/ProductSharePie";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
@@ -31,9 +32,10 @@ function aggregate(rows: AdRow[]) {
       acc.landingPageViews += r.landingPageViews;
       acc.valorCompra += r.valorCompra;
       acc.valorCheckout += r.valorCheckout;
+      acc.initiateCheckout += r.initiateCheckout;
       return acc;
     },
-    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0 },
+    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0 },
   );
 }
 
@@ -162,6 +164,21 @@ function Dashboard() {
     clicks: d.clicks,
     leads: d.leads,
   }));
+
+  // Product share (sales count + leads count) by curso
+  const { salesShare, leadsShare } = useMemo(() => {
+    const sMap = new Map<string, number>();
+    const lMap = new Map<string, number>();
+    for (const r of filtered) {
+      const k = r.curso || "Sem categoria";
+      sMap.set(k, (sMap.get(k) || 0) + r.compras);
+      lMap.set(k, (lMap.get(k) || 0) + r.leads);
+    }
+    return {
+      salesShare: Array.from(sMap, ([name, value]) => ({ name, value })),
+      leadsShare: Array.from(lMap, ([name, value]) => ({ name, value })),
+    };
+  }, [filtered]);
 
   if (error) {
     return (
@@ -310,12 +327,22 @@ function Dashboard() {
                   visitas={agg.landingPageViews}
                   compras={agg.compras}
                   valorCompra={agg.valorCompra}
-                  checkout={agg.valorCheckout}
+                  checkout={agg.initiateCheckout}
                   leads={agg.leads}
                   showLeads={modo === "lead" || modo === "geral"}
                 />
               </Reveal>
             </div>
+          </div>
+
+          {/* Product share pies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Reveal direction="left">
+              <ProductSharePie title="Participação dos Produtos · Vendas" data={salesShare} />
+            </Reveal>
+            <Reveal direction="right" delay={0.1}>
+              <ProductSharePie title="Participação dos Produtos · Leads" data={leadsShare} delay={0.05} />
+            </Reveal>
           </div>
 
           {/* Creatives table */}
