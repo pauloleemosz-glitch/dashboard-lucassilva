@@ -62,25 +62,34 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
       initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
       animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(6px)" }}
       transition={{ duration: 1.2, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-card rounded-xl p-5 relative overflow-hidden group hover:border-primary/40 transition-colors"
+      className="glass-card rounded-xl p-3 sm:p-5 relative overflow-hidden group hover:border-primary/40 transition-colors min-w-0"
     >
       <div
         className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-2xl pointer-events-none"
         style={{ background: glowMap[color] }}
       />
-      <div className="flex items-start justify-between mb-3 relative">
-        <span className="text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
-        <Icon className={cn("h-4 w-4", colorMap[color])} style={{ filter: `drop-shadow(0 0 6px ${glowMap[color]})` }} />
+      <div className="flex items-start justify-between mb-2 sm:mb-3 relative gap-2 min-w-0">
+        <span className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground truncate">{label}</span>
+        <Icon className={cn("h-4 w-4 shrink-0", colorMap[color])} style={{ filter: `drop-shadow(0 0 6px ${glowMap[color]})` }} />
       </div>
       {value === null ? (
-        <div className="text-2xl sm:text-3xl text-muted-foreground">—</div>
+        <div className="text-xl sm:text-3xl text-muted-foreground">—</div>
       ) : (
-        <motion.div className={cn("text-2xl sm:text-3xl font-light tracking-tight break-all leading-tight", colorMap[color])}>{display}</motion.div>
+        <motion.div
+          className={cn(
+            "font-light tracking-tight leading-tight tabular-nums whitespace-nowrap overflow-hidden text-ellipsis",
+            "text-[clamp(1.05rem,5.2vw,1.875rem)] sm:text-3xl",
+            colorMap[color],
+          )}
+          title={typeof value === "number" ? value.toString() : undefined}
+        >
+          {display}
+        </motion.div>
       )}
-      <div className={cn("flex items-center gap-1 mt-2 text-xs", variationDisplay.cls)}>
-        <VIcon className="h-3 w-3" />
+      <div className={cn("flex items-center gap-1 mt-2 text-[10px] sm:text-xs flex-wrap", variationDisplay.cls)}>
+        <VIcon className="h-3 w-3 shrink-0" />
         <span>{variationDisplay.text}</span>
-        <span className="text-muted-foreground ml-1">vs período anterior</span>
+        <span className="text-muted-foreground ml-1 truncate">vs período anterior</span>
       </div>
     </motion.div>
   );
