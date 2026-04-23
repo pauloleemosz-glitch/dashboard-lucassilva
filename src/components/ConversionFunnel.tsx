@@ -37,11 +37,11 @@ export function ConversionFunnel({
   ];
   if (showLeads) {
     stages.push({ label: "Leads", value: leads, prev: visitas, color: "hsl(var(--neon-cyan))", display: formatNumber(leads) });
-    stages.push({ label: "Initiate Checkout", value: checkout, prev: leads, color: "hsl(var(--neon-gold))", display: formatBRL(checkout), isCurrency: true });
-    stages.push({ label: "Compra", value: compras, prev: leads, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
+    stages.push({ label: "Initiate Checkout", value: checkout, prev: leads, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
+    stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
   } else {
-    stages.push({ label: "Initiate Checkout", value: checkout, prev: visitas, color: "hsl(var(--neon-gold))", display: formatBRL(checkout), isCurrency: true });
-    stages.push({ label: "Compra", value: compras, prev: visitas, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
+    stages.push({ label: "Initiate Checkout", value: checkout, prev: visitas, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
+    stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
   }
   stages.push({
     label: "Valor de Compra",
