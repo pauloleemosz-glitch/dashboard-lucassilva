@@ -33,6 +33,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Use Firecrawl "actions" to wait, dismiss cookie banner if present,
+    // and take a screenshot of the ad card element only.
+    // The Meta Ad Library renders each ad inside a container with role="article"
+    // (or similar). We try a couple of selectors for resilience.
     const fcRes = await fetch(`${FIRECRAWL_V2}/scrape`, {
       method: "POST",
       headers: {
@@ -41,9 +45,40 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         url,
-        formats: ["screenshot"],
+        formats: [
+          {
+            type: "screenshot",
+            fullPage: false,
+            quality: 85,
+            // Try to crop to the ad card element. Firecrawl supports `selector`
+            // on the screenshot format; if not matched, falls back to viewport.
+            selector:
+              'div[role="article"], div[data-pagelet*="AdLibrary"] div[role="article"], div[class*="x1lliihq"][class*="x1n2onr6"]',
+          },
+        ],
         onlyMainContent: false,
-        waitFor: 2500,
+        waitFor: 4000,
+        viewport: { width: 600, height: 900 },
+        actions: [
+          { type: "wait", milliseconds: 1500 },
+          // Dismiss cookie / login dialogs if they appear
+          {
+            type: "click",
+            selector: 'div[aria-label="Allow all cookies"], button[title="Allow all cookies"]',
+            optional: true,
+          },
+          {
+            type: "click",
+            selector: 'div[aria-label="Decline optional cookies"]',
+            optional: true,
+          },
+          {
+            type: "click",
+            selector: 'div[aria-label="Close"]',
+            optional: true,
+          },
+          { type: "wait", milliseconds: 1500 },
+        ],
       }),
     });
 
@@ -57,7 +92,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // v2 may return { data: { screenshot } } or { screenshot } at root
     const screenshot: string | undefined =
       data?.screenshot ?? data?.data?.screenshot ?? data?.data?.[0]?.screenshot;
 
