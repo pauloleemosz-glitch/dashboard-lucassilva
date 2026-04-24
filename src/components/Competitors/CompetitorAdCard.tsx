@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CompetitorAd } from "@/hooks/useCompetitorsData";
 import { useAdPreview } from "@/hooks/useAdPreview";
+import { extractDriveId, isVideoDriveUrl } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
