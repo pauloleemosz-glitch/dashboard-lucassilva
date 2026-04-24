@@ -1,68 +1,30 @@
+## Objetivo
+Adicionar uma nova seção no dashboard que exibe os anúncios ativos e desativados de cada concorrente, com base na aba "Concorrentes" da planilha.
 
+## Implementação
 
-# Dashboard Meta Ads Futurista
+### 1. Hook de dados — `src/hooks/useCompetitorsData.ts`
+- Fetch da aba "Concorrentes" via `gviz/tq?tqx=out:csv&sheet=Concorrentes`.
+- Parse com PapaParse.
+- Extrair `adId` único de cada anúncio via regex no link da Ad Library.
+- Para cada `adId`, calcular:
+  - `firstSeen` / `lastSeen` (datas de extração)
+  - `status`: **Ativo** se `lastSeen === maxExtractionDate`, senão **Desativado**
+  - `diasAtivo`: dias entre `Início Anúncio` e (hoje | data de desativação)
+- Agrupar resultado por `concorrente`.
 
-Dashboard frontend-only que lê dados da planilha Google Sheets pública e exibe métricas de campanhas Meta Ads com visual neon dark (ciano/roxo/laranja, tipografia leve sem bold).
+### 2. Utilitários — `src/utils/parsers.ts`
+- `extractAdId(url)` — regex sobre links da Biblioteca de Anúncios.
+- `parsePlatforms(str)` — normaliza "Facebook, Instagram" em array.
+- `daysBetween(a, b)` — diferença em dias inteiros.
 
-## Conexão com dados
-- Hook `useSheetData.ts` busca o CSV via endpoint `gviz/tq?tqx=out:csv` (sem necessidade de API Key, planilha já é pública)
-- Sheet ID configurável via `VITE_SHEET_ID` (.env), com fallback para o ID fornecido
-- Parse CSV com PapaParse, conversão de números no formato BR (vírgula decimal)
-- Auto-refresh a cada 5 min com badge "Última atualização: HH:MM"
-- React Query para cache, retry e loading states
+### 3. Componentes UI
+- **`CompetitorAdCard.tsx`**: card com badge de status (verde "Ativo há X dias" ou vermelho "Desativado em DD/MM"), data de início formatada, ícones de plataforma, texto do anúncio truncado, link externo para a Ad Library.
+- **`CompetitorGroup.tsx`**: usa `Accordion` shadcn para agrupar por concorrente, com contadores no header (ex.: "5 ativos · 2 desativados").
+- **`CompetitorsSection.tsx`**: container com KPIs de resumo (total monitorado, ativos, desativados) + lista de grupos. Trata loading/erro.
 
-## Filtros globais (FilterContext)
-- Date range picker (shadcn Calendar) — default: últimos 30 dias presentes nos dados
-- Dropdown "Curso / Produto" populado dinamicamente a partir da coluna `Curso / Produto`
-- Toggle "Perpétuo / Lançamento" — controla a fórmula do CPA principal
-- Filtros aplicados reativamente em todos os KPIs, gráficos, funil e tabela
+### 4. Integração
+- Adicionar `<CompetitorsSection />` em `src/pages/Index.tsx` envolvido em `<Reveal>` para manter o padrão de animação do dashboard.
 
-## KPI Cards (linha superior)
-8 cards com glassmorphism, ícones Lucide neon, animação counter-up (Framer Motion), variação % vs período anterior com seta:
-Investimento, Impressões, Cliques, Vendas, CPC, CPM, CTR, CPA (dinâmico via toggle).
-
-## Funil de conversão (lateral direita)
-Camadas decrescentes animadas (preenchimento top-down):
-Cliques → Visitou Site (Landing Page Views) → Compra → Valor de Compra R$
-Initiate Checkout exibido à direita como métrica auxiliar. Cada camada mostra valor + taxa de conversão da etapa anterior.
-
-## Gráficos centrais (Recharts, slide-up + fade)
-1. Investimento diário (barras) + Cliques (linha) — dual axis
-2. Alcance e Frequência por dia — barras agrupadas (frequência calculada como Impressões/Reach)
-3. Gastos, Compras e CPA ao longo do tempo — multi-linha
-- Grid lines opacity 0.1 ciano, tooltips dark com borda neon
-
-## Tabela de criativos (inferior)
-Agregada por `Ad Name`, filtrada pelo Curso selecionado.
-Colunas: #, Thumbnail, Link, Leads, Impressões, Reproduções (3s), Cliques, CTR, Hook Rate, CPM, Reprod. 25%, Reprod. 100% (95%), Investido, Valor Conversão.
-- Ordenação por header (default: Impressões desc), paginação 10/página
-- Nulls → "—"
-- Linha com maior Valor Conversão com borda neon ciano pulsante
-- Thumbnail: preview do Drive via `https://drive.google.com/thumbnail?id=...` com fallback de ícone
-
-## Métricas calculadas (`src/utils/metrics.ts`)
-Funções centralizadas: cpaPerpetuo, cpaLancamento, ctr, hookRate, taxaConversaoFunil, valorMedioVenda. Divisor zero/null → null.
-
-## Visual / Tema
-- Background `#050A14`, accents `#00F0FF`, `#B44FFF`, `#FF6B35` adicionados ao design system (HSL em `index.css` + `tailwind.config.ts`)
-- Inter via Google Fonts, pesos 300/400 apenas; CSS global removendo `font-bold`
-- Scrollbar customizada fina ciano, skeleton shimmer neon para loading
-
-## Estrutura de arquivos
-```
-src/
-  hooks/useSheetData.ts
-  context/FilterContext.tsx
-  utils/metrics.ts, parsers.ts
-  components/
-    KPICard.tsx
-    ConversionFunnel.tsx
-    CreativeTable.tsx
-    GlobalFilters.tsx
-    Charts/{InvestmentClicks,ReachFrequency,SpendPurchasesCPA}.tsx
-  pages/Index.tsx (compõe o dashboard)
-.env.example (VITE_SHEET_ID)
-```
-
-Dependências a adicionar: `papaparse`, `framer-motion`, `recharts`, `date-fns` (já comum em shadcn).
-
+## Estilo
+Mantém o visual futurista existente (cards com borda neon, badges arredondados, tipografia consistente).
