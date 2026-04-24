@@ -1,7 +1,8 @@
-import { ExternalLink, Calendar, Activity, XCircle } from "lucide-react";
+import { ExternalLink, Calendar, Activity, XCircle, ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CompetitorAd } from "@/hooks/useCompetitorsData";
+import { useAdPreview } from "@/hooks/useAdPreview";
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -21,14 +22,12 @@ export function CompetitorAdCard({ ad }: Props) {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
+  const { src, loading, error, load } = useAdPreview(ad.adId, ad.link);
 
   return (
-    <a
-      href={ad.link}
-      target="_blank"
-      rel="noopener noreferrer"
+    <div
       className={cn(
-        "glass-card rounded-xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5 group",
+        "glass-card rounded-xl p-4 flex flex-col gap-3 transition-all group",
         isActive
           ? "border-neon-cyan/40 hover:border-neon-cyan/80 hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.25)]"
           : "border-neon-orange/30 hover:border-neon-orange/60 opacity-90",
