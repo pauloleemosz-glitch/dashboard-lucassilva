@@ -55,11 +55,11 @@ Deno.serve(async (req) => {
     ].join(",");
 
     const params = new URLSearchParams({
-      search_terms: "",
       ad_type: "ALL",
       ad_active_status: "ALL",
       ad_reached_countries: JSON.stringify([country]),
-      ad_archive_id: adId,
+      search_ids: JSON.stringify([adId]),
+      search_terms: ".",
       fields,
       access_token: token,
     });
@@ -70,10 +70,15 @@ Deno.serve(async (req) => {
     if (!fbRes.ok) {
       const metaMessage = data?.error?.message as string | undefined;
       const metaCode = data?.error?.code as number | undefined;
+      const metaSubcode = data?.error?.error_subcode as number | undefined;
+      const metaType = data?.error?.type as string | undefined;
       console.error("Meta Ad Library error", {
         status: fbRes.status,
         metaCode,
+        metaSubcode,
+        metaType,
         message: metaMessage,
+        full: data?.error,
       });
 
       if (metaMessage?.toLowerCase().includes("access token could not be decrypted")) {
