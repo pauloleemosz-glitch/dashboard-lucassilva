@@ -87,25 +87,36 @@ export function CompetitorAdCard({ ad }: Props) {
             className="absolute inset-0 w-full h-full border-0 bg-black"
           />
         ) : hasDrive ? (
-          <img
-            src={`https://lh3.googleusercontent.com/d/${driveId}=w800`}
-            referrerPolicy="no-referrer"
-            alt={`Criativo do anúncio ${titulo}`}
-            loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget;
-              const fallback = `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
-              if (img.src !== fallback) {
-                img.src = fallback;
-              } else {
-                // Final fallback: swap to iframe preview
-                img.style.display = "none";
-                const iframe = img.nextElementSibling as HTMLIFrameElement | null;
-                if (iframe) iframe.style.display = "block";
-              }
-            }}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          <>
+            <img
+              src={`https://lh3.googleusercontent.com/d/${driveId}=w800`}
+              referrerPolicy="no-referrer"
+              alt={`Criativo do anúncio ${titulo}`}
+              loading="lazy"
+              onError={(e) => {
+                const img = e.currentTarget;
+                const fallback = `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
+                if (!img.dataset.fallback) {
+                  img.dataset.fallback = "1";
+                  img.src = fallback;
+                } else {
+                  // Final fallback: reveal iframe preview (works for videos too)
+                  img.style.display = "none";
+                  const iframe = img.nextElementSibling as HTMLIFrameElement | null;
+                  if (iframe) iframe.style.display = "block";
+                }
+              }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <iframe
+              src={`https://drive.google.com/file/d/${driveId}/preview`}
+              title={`Prévia do anúncio ${titulo}`}
+              loading="lazy"
+              allow="autoplay"
+              style={{ display: "none" }}
+              className="absolute inset-0 w-full h-full border-0 bg-black"
+            />
+          </>
         ) : mediaVideo ? (
           <video
             src={mediaVideo}
