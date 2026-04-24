@@ -23,6 +23,9 @@ interface AggRow {
   videoPlays95: number;
   spend: number;
   valorConversao: number;
+  compras: number;
+  cpaCompra: number | null;
+  cpaLead: number | null;
 }
 
 type SortKey = keyof Omit<AggRow, "link" | "driveId" | "curso">;
