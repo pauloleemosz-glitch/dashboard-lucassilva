@@ -60,6 +60,12 @@ export function extractDriveId(url: string | null | undefined): string | null {
   return null;
 }
 
+/** Returns true if the URL appears to point to a video file (by extension). */
+export function isVideoDriveUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return /\.(mp4|mov|webm|m4v)(\?|$)/i.test(url);
+}
+
 /** Extracts the numeric ad id from a Facebook Ad Library link. */
 export function extractAdId(url: string | null | undefined): string | null {
   if (!url) return null;
