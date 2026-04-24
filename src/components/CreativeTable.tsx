@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink, ChevronsRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { AdRow } from "@/hooks/useSheetData";
-import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn } from "@/utils/metrics";
+import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn, cpaPerpetuo, cpaLancamento } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
