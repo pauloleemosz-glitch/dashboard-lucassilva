@@ -54,6 +54,9 @@ function aggregate(rows: AdRow[]): AggRow[] {
         videoPlays95: r.videoPlays95,
         spend: r.spend,
         valorConversao: r.valorCompra,
+        compras: r.compras,
+        cpaCompra: null,
+        cpaLead: null,
       });
     } else {
       existing.leads += r.leads;
@@ -64,12 +67,15 @@ function aggregate(rows: AdRow[]): AggRow[] {
       existing.videoPlays95 += r.videoPlays95;
       existing.spend += r.spend;
       existing.valorConversao += r.valorCompra;
+      existing.compras += r.compras;
     }
   }
   for (const v of map.values()) {
     v.ctr = ctrFn(v.clicks, v.impressions);
     v.hookRate = hookRateFn(v.videoPlays3s, v.impressions);
     v.cpm = cpmFn(v.spend, v.impressions);
+    v.cpaCompra = cpaPerpetuo(v.spend, v.compras);
+    v.cpaLead = cpaLancamento(v.spend, v.leads);
   }
   return Array.from(map.values());
 }
