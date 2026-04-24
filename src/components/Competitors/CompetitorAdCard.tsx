@@ -25,6 +25,7 @@ export function CompetitorAdCard({ ad }: Props) {
   const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link);
   const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
   const mediaVideo = creative?.videoUrl;
+  const snapshotUrl = creative?.snapshotUrl;
 
   return (
     <div
