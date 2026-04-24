@@ -1,9 +1,10 @@
-import { ExternalLink, Calendar, Activity, XCircle, ImageIcon, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Calendar, Activity, XCircle, ImageIcon, Loader2, ChevronLeft, ChevronRight, Layers } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CompetitorAd } from "@/hooks/useCompetitorsData";
 import { useAdPreview } from "@/hooks/useAdPreview";
-import { extractDriveId, isVideoDriveUrl } from "@/utils/parsers";
+import { extractDriveIds } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -24,15 +25,17 @@ export function CompetitorAdCard({ ad }: Props) {
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
 
-  const driveId = extractDriveId(ad.driveLink);
-  const driveIsVideo = isVideoDriveUrl(ad.driveLink);
-  const hasDrive = Boolean(driveId);
+  const driveIds = extractDriveIds(ad.driveLink);
+  const hasDrive = driveIds.length > 0;
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const currentDriveId = driveIds[currentIdx];
 
   // Only fetch Meta preview as fallback when there's no Drive media
   const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link, !hasDrive);
   const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
   const mediaVideo = creative?.videoUrl;
   const snapshotUrl = creative?.snapshotUrl;
+
 
   return (
     <div
