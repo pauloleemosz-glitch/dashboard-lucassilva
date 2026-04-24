@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CompetitorAd } from "@/hooks/useCompetitorsData";
 import { useAdPreview } from "@/hooks/useAdPreview";
+import { extractDriveId, isVideoDriveUrl } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -22,7 +23,13 @@ export function CompetitorAdCard({ ad }: Props) {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
-  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link);
+
+  const driveId = extractDriveId(ad.driveLink);
+  const driveIsVideo = isVideoDriveUrl(ad.driveLink);
+  const hasDrive = Boolean(driveId);
+
+  // Only fetch Meta preview as fallback when there's no Drive media
+  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link, !hasDrive);
   const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
   const mediaVideo = creative?.videoUrl;
   const snapshotUrl = creative?.snapshotUrl;
@@ -71,7 +78,22 @@ export function CompetitorAdCard({ ad }: Props) {
 
       {/* Preview */}
       <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden bg-background/60">
-        {mediaVideo ? (
+        {hasDrive && driveIsVideo ? (
+          <iframe
+            src={`https://drive.google.com/file/d/${driveId}/preview`}
+            title={`Vídeo do anúncio ${titulo}`}
+            loading="lazy"
+            allow="autoplay"
+            className="absolute inset-0 w-full h-full border-0 bg-black"
+          />
+        ) : hasDrive ? (
+          <img
+            src={`https://drive.google.com/uc?export=view&id=${driveId}`}
+            alt={`Criativo do anúncio ${titulo}`}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : mediaVideo ? (
           <video
             src={mediaVideo}
             poster={mediaImg}
@@ -101,6 +123,16 @@ export function CompetitorAdCard({ ad }: Props) {
             <Loader2 className="h-5 w-5 animate-spin text-neon-cyan" />
             <span className="text-[10px] uppercase tracking-widest">Gerando preview…</span>
           </div>
+        ) : ad.link ? (
+          <a
+            href={ad.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-neon-cyan hover:bg-neon-cyan/5 transition-colors"
+          >
+            <ExternalLink className="h-5 w-5" />
+            <span className="text-[10px] uppercase tracking-widest">Ver no Ad Library</span>
+          </a>
         ) : (
           <button
             type="button"

@@ -14,6 +14,7 @@ export interface CompetitorAd {
   descricao: string;
   plataformas: string[];
   link: string;
+  driveLink: string;
   firstSeen: Date | null;
   lastSeen: Date | null;
   status: CompetitorAdStatus;
@@ -105,7 +106,8 @@ async function fetchCompetitors(): Promise<{
       texto: cleanAdText(latest["Texto"] || ""),
       descricao: (latest["Descrição"] || "").trim(),
       plataformas: parsePlatforms(latest["Plataformas"]),
-      link: latest["Link Prévia"] || "",
+      link: latest["Link Prévia"] || latest["Link Ad Library"] || "",
+      driveLink: (latest["Link Drive"] || "").trim(),
       firstSeen,
       lastSeen,
       status: isActive ? "ativo" : "desativado",
