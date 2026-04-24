@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink, ChevronsRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { AdRow } from "@/hooks/useSheetData";
-import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn } from "@/utils/metrics";
+import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn, cpaPerpetuo, cpaLancamento } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -23,6 +23,9 @@ interface AggRow {
   videoPlays95: number;
   spend: number;
   valorConversao: number;
+  compras: number;
+  cpaCompra: number | null;
+  cpaLead: number | null;
 }
 
 type SortKey = keyof Omit<AggRow, "link" | "driveId" | "curso">;
@@ -51,6 +54,9 @@ function aggregate(rows: AdRow[]): AggRow[] {
         videoPlays95: r.videoPlays95,
         spend: r.spend,
         valorConversao: r.valorCompra,
+        compras: r.compras,
+        cpaCompra: null,
+        cpaLead: null,
       });
     } else {
       existing.leads += r.leads;
@@ -61,12 +67,15 @@ function aggregate(rows: AdRow[]): AggRow[] {
       existing.videoPlays95 += r.videoPlays95;
       existing.spend += r.spend;
       existing.valorConversao += r.valorCompra;
+      existing.compras += r.compras;
     }
   }
   for (const v of map.values()) {
     v.ctr = ctrFn(v.clicks, v.impressions);
     v.hookRate = hookRateFn(v.videoPlays3s, v.impressions);
     v.cpm = cpmFn(v.spend, v.impressions);
+    v.cpaCompra = cpaPerpetuo(v.spend, v.compras);
+    v.cpaLead = cpaLancamento(v.spend, v.leads);
   }
   return Array.from(map.values());
 }
@@ -124,6 +133,8 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
     { key: "videoPlays95", label: "Reprod. 100%", format: (v) => formatNumber(v) },
     { key: "spend", label: "Investido", format: (v) => formatBRL(v) },
     { key: "valorConversao", label: "Valor Conversão", format: (v) => formatBRL(v) },
+    { key: "cpaCompra", label: "Custo / Compra", format: (v) => formatBRL(v) },
+    { key: "cpaLead", label: "Custo / Lead", format: (v) => formatBRL(v) },
   ];
 
   return (
