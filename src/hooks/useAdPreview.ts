@@ -38,7 +38,12 @@ export function useAdPreview(adId: string, _link: string, autoLoad = true) {
           if (fnErr) throw new Error(fnErr.message);
           const result = data as AdCreative & { error?: string };
           if (result?.error) throw new Error(result.error);
-          if (!result?.imageUrl && !result?.videoUrl && !result?.videoThumb) {
+          if (
+            !result?.imageUrl &&
+            !result?.videoUrl &&
+            !result?.videoThumb &&
+            !result?.snapshotUrl
+          ) {
             throw new Error("Sem mídia disponível");
           }
           cache.set(adId, result);
