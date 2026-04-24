@@ -88,6 +88,14 @@ export function CompetitorAdCard({ ad }: Props) {
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
           />
+        ) : snapshotUrl ? (
+          <iframe
+            src={snapshotUrl}
+            title={`Prévia do anúncio ${titulo}`}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full border-0 bg-white"
+            sandbox="allow-scripts allow-same-origin"
+          />
         ) : loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin text-neon-cyan" />
