@@ -60,6 +60,22 @@ export function extractDriveId(url: string | null | undefined): string | null {
   return null;
 }
 
+/** Splits a "Link Drive" cell that may contain multiple URLs separated by " | " or newlines. */
+export function splitDriveLinks(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(/\s*\|\s*|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Extracts all Drive IDs from a "Link Drive" cell that may contain multiple URLs. */
+export function extractDriveIds(value: string | null | undefined): string[] {
+  return splitDriveLinks(value)
+    .map((url) => extractDriveId(url))
+    .filter((id): id is string => Boolean(id));
+}
+
 /** Returns true if the URL appears to point to a video file (by extension). */
 export function isVideoDriveUrl(url: string | null | undefined): boolean {
   if (!url) return false;
