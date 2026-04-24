@@ -166,3 +166,9 @@ function unescapeJsonUrl(s?: string): string | undefined {
   if (!s) return undefined;
   return s.replace(/\\\//g, "/").replace(/\\u0026/g, "&").replace(/\\\\/g, "\\");
 }
+
+function normalizeToken(token?: string | null): string | undefined {
+  if (!token) return undefined;
+  const normalized = token.replace(/[\r\n\t ]+/g, "").trim();
+  return normalized || undefined;
+}
