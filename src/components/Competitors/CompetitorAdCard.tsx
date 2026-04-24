@@ -88,9 +88,22 @@ export function CompetitorAdCard({ ad }: Props) {
           />
         ) : hasDrive ? (
           <img
-            src={`https://drive.google.com/uc?export=view&id=${driveId}`}
+            src={`https://lh3.googleusercontent.com/d/${driveId}=w800`}
+            referrerPolicy="no-referrer"
             alt={`Criativo do anúncio ${titulo}`}
             loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              const fallback = `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
+              if (img.src !== fallback) {
+                img.src = fallback;
+              } else {
+                // Final fallback: swap to iframe preview
+                img.style.display = "none";
+                const iframe = img.nextElementSibling as HTMLIFrameElement | null;
+                if (iframe) iframe.style.display = "block";
+              }
+            }}
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : mediaVideo ? (
