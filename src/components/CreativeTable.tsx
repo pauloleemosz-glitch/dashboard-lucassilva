@@ -123,6 +123,7 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
 
   const cols: { key: SortKey; label: string; format: (v: any) => string }[] = [
     { key: "leads", label: "Leads", format: (v) => formatNumber(v) },
+    { key: "cpaLead", label: "Custo / Lead", format: (v) => formatBRL(v) },
     { key: "impressions", label: "Impressões", format: (v) => formatNumber(v) },
     { key: "videoPlays3s", label: "Reproduções", format: (v) => formatNumber(v) },
     { key: "clicks", label: "Cliques", format: (v) => formatNumber(v) },
@@ -134,7 +135,6 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
     { key: "spend", label: "Investido", format: (v) => formatBRL(v) },
     { key: "valorConversao", label: "Valor Conversão", format: (v) => formatBRL(v) },
     { key: "cpaCompra", label: "Custo / Compra", format: (v) => formatBRL(v) },
-    { key: "cpaLead", label: "Custo / Lead", format: (v) => formatBRL(v) },
   ];
 
   return (
