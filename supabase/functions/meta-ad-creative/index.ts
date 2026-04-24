@@ -29,8 +29,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("META_ADS_ACCESS_TOKEN");
+    const rawToken = Deno.env.get("META_ADS_ACCESS_TOKEN");
+    const token = normalizeToken(rawToken);
     if (!token) {
+      console.error("META_ADS_ACCESS_TOKEN ausente ou vazio");
       return json({ error: "META_ADS_ACCESS_TOKEN não configurado" }, 500);
     }
 
@@ -41,9 +43,6 @@ Deno.serve(async (req) => {
       return json({ error: "adId inválido" }, 400);
     }
 
-    // Meta Ad Library API: /ads_archive
-    // We query by ad_archive_id (the numeric id from the library URL).
-    // Request creative-related fields.
     const fields = [
       "id",
       "ad_creative_link_titles",
@@ -55,19 +54,39 @@ Deno.serve(async (req) => {
       "publisher_platforms",
     ].join(",");
 
-    const url =
-      `${GRAPH}/ads_archive` +
-      `?search_terms=&ad_type=ALL&ad_active_status=ALL` +
-      `&ad_reached_countries=["${country}"]` +
-      `&ad_archive_id=${adId}` +
-      `&fields=${fields}` +
-      `&access_token=${encodeURIComponent(token)}`;
+    const params = new URLSearchParams({
+      search_terms: "",
+      ad_type: "ALL",
+      ad_active_status: "ALL",
+      ad_reached_countries: JSON.stringify([country]),
+      ad_archive_id: adId,
+      fields,
+      access_token: token,
+    });
 
-    const fbRes = await fetch(url);
+    const fbRes = await fetch(`${GRAPH}/ads_archive?${params.toString()}`);
     const data = await fbRes.json().catch(() => null);
 
     if (!fbRes.ok) {
-      const msg = data?.error?.message || `Graph API ${fbRes.status}`;
+      const metaMessage = data?.error?.message as string | undefined;
+      const metaCode = data?.error?.code as number | undefined;
+      console.error("Meta Ad Library error", {
+        status: fbRes.status,
+        metaCode,
+        message: metaMessage,
+      });
+
+      if (metaMessage?.toLowerCase().includes("access token could not be decrypted")) {
+        return json(
+          {
+            error:
+              "O token da Meta salvo no backend é inválido, foi colado com espaços/quebras de linha ou expirou.",
+          },
+          502,
+        );
+      }
+
+      const msg = metaMessage || `Graph API ${fbRes.status}`;
       return json({ error: msg }, 502);
     }
 
@@ -146,4 +165,10 @@ function matchFirst(text: string, re: RegExp): string | undefined {
 function unescapeJsonUrl(s?: string): string | undefined {
   if (!s) return undefined;
   return s.replace(/\\\//g, "/").replace(/\\u0026/g, "&").replace(/\\\\/g, "\\");
+}
+
+function normalizeToken(token?: string | null): string | undefined {
+  if (!token) return undefined;
+  const normalized = token.replace(/[\r\n\t ]+/g, "").trim();
+  return normalized || undefined;
 }
