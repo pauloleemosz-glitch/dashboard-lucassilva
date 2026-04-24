@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       ad_active_status: "ALL",
       ad_reached_countries: JSON.stringify([country]),
       search_ids: JSON.stringify([adId]),
+      search_terms: ".",
       fields,
       access_token: token,
     });
