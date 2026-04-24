@@ -133,6 +133,8 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
     { key: "videoPlays95", label: "Reprod. 100%", format: (v) => formatNumber(v) },
     { key: "spend", label: "Investido", format: (v) => formatBRL(v) },
     { key: "valorConversao", label: "Valor Conversão", format: (v) => formatBRL(v) },
+    { key: "cpaCompra", label: "Custo / Compra", format: (v) => formatBRL(v) },
+    { key: "cpaLead", label: "Custo / Lead", format: (v) => formatBRL(v) },
   ];
 
   return (
