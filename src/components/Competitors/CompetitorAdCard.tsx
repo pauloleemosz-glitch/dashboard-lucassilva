@@ -73,21 +73,20 @@ export function CompetitorAdCard({ ad }: Props) {
             src={src}
             alt={`Preview do anúncio ${titulo}`}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain bg-background"
           />
+        ) : loading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin text-neon-cyan" />
+            <span className="text-[10px] uppercase tracking-widest">Gerando preview…</span>
+          </div>
         ) : (
           <button
             type="button"
             onClick={load}
-            disabled={loading}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-neon-cyan hover:bg-neon-cyan/5 transition-colors disabled:opacity-60"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-neon-cyan hover:bg-neon-cyan/5 transition-colors"
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-[10px] uppercase tracking-widest">Gerando preview…</span>
-              </>
-            ) : error ? (
+            {error ? (
               <>
                 <ImageIcon className="h-5 w-5 text-neon-orange" />
                 <span className="text-[10px] text-neon-orange/90 px-3 text-center">{error}</span>
@@ -96,7 +95,7 @@ export function CompetitorAdCard({ ad }: Props) {
             ) : (
               <>
                 <ImageIcon className="h-5 w-5" />
-                <span className="text-[10px] uppercase tracking-widest">Ver preview</span>
+                <span className="text-[10px] uppercase tracking-widest">Carregar preview</span>
               </>
             )}
           </button>
