@@ -81,44 +81,40 @@ export function CompetitorAdCard({ ad }: Props) {
 
       {/* Preview */}
       <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden bg-background/60">
-        {hasDrive && driveIsVideo ? (
-          <iframe
-            src={`https://drive.google.com/file/d/${driveId}/preview`}
-            title={`Vídeo do anúncio ${titulo}`}
-            loading="lazy"
-            allow="autoplay"
-            className="absolute inset-0 w-full h-full border-0 bg-black"
-          />
-        ) : hasDrive ? (
+        {hasDrive && currentDriveId ? (
           <>
-            <img
-              src={`https://lh3.googleusercontent.com/d/${driveId}=w800`}
-              referrerPolicy="no-referrer"
-              alt={`Criativo do anúncio ${titulo}`}
-              loading="lazy"
-              onError={(e) => {
-                const img = e.currentTarget;
-                const fallback = `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
-                if (!img.dataset.fallback) {
-                  img.dataset.fallback = "1";
-                  img.src = fallback;
-                } else {
-                  // Final fallback: reveal iframe preview (works for videos too)
-                  img.style.display = "none";
-                  const iframe = img.nextElementSibling as HTMLIFrameElement | null;
-                  if (iframe) iframe.style.display = "block";
-                }
-              }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
             <iframe
-              src={`https://drive.google.com/file/d/${driveId}/preview`}
+              key={currentDriveId}
+              src={`https://drive.google.com/file/d/${currentDriveId}/preview`}
               title={`Prévia do anúncio ${titulo}`}
               loading="lazy"
               allow="autoplay"
-              style={{ display: "none" }}
               className="absolute inset-0 w-full h-full border-0 bg-black"
             />
+            {driveIds.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentIdx((i) => (i - 1 + driveIds.length) % driveIds.length)}
+                  className="absolute left-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-neon-cyan/20 hover:text-neon-cyan transition-colors border border-primary/30"
+                  aria-label="Anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentIdx((i) => (i + 1) % driveIds.length)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-foreground hover:bg-neon-cyan/20 hover:text-neon-cyan transition-colors border border-primary/30"
+                  aria-label="Próximo"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <div className="absolute top-1.5 right-1.5 z-10 inline-flex items-center gap-1 text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-background/80 backdrop-blur text-neon-cyan border border-neon-cyan/30">
+                  <Layers className="h-2.5 w-2.5" />
+                  {currentIdx + 1}/{driveIds.length}
+                </div>
+              </>
+            )}
           </>
         ) : mediaVideo ? (
           <video
