@@ -23,7 +23,13 @@ export function CompetitorAdCard({ ad }: Props) {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
-  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link);
+
+  const driveId = extractDriveId(ad.driveLink);
+  const driveIsVideo = isVideoDriveUrl(ad.driveLink);
+  const hasDrive = Boolean(driveId);
+
+  // Only fetch Meta preview as fallback when there's no Drive media
+  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link, !hasDrive);
   const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
   const mediaVideo = creative?.videoUrl;
   const snapshotUrl = creative?.snapshotUrl;
