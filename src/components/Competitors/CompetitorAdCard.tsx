@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { ExternalLink, Calendar, Activity, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,13 +18,14 @@ interface Props {
   ad: CompetitorAd;
 }
 
-export function CompetitorAdCard({ ad }: Props) {
+export const CompetitorAdCard = forwardRef<HTMLAnchorElement, Props>(({ ad }, ref) => {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
 
   return (
     <a
+      ref={ref}
       href={ad.link}
       target="_blank"
       rel="noopener noreferrer"
@@ -99,4 +101,5 @@ export function CompetitorAdCard({ ad }: Props) {
       </div>
     </a>
   );
-}
+});
+CompetitorAdCard.displayName = "CompetitorAdCard";
