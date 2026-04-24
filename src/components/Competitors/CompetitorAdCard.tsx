@@ -67,13 +67,13 @@ export function CompetitorAdCard({ ad }: Props) {
       </div>
 
       {/* Preview */}
-      <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-primary/15 bg-background/40">
+      <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden bg-background/60">
         {src ? (
           <img
             src={src}
             alt={`Preview do anúncio ${titulo}`}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-contain bg-background"
+            className="absolute inset-0 w-full h-full object-cover object-top"
           />
         ) : loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
