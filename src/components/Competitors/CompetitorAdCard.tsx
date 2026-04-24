@@ -1,7 +1,8 @@
-import { ExternalLink, Calendar, Activity, XCircle } from "lucide-react";
+import { ExternalLink, Calendar, Activity, XCircle, ImageIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CompetitorAd } from "@/hooks/useCompetitorsData";
+import { useAdPreview } from "@/hooks/useAdPreview";
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -21,14 +22,12 @@ export function CompetitorAdCard({ ad }: Props) {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
+  const { src, loading, error, load } = useAdPreview(ad.adId, ad.link);
 
   return (
-    <a
-      href={ad.link}
-      target="_blank"
-      rel="noopener noreferrer"
+    <div
       className={cn(
-        "glass-card rounded-xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5 group",
+        "glass-card rounded-xl p-4 flex flex-col gap-3 transition-all group",
         isActive
           ? "border-neon-cyan/40 hover:border-neon-cyan/80 hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.25)]"
           : "border-neon-orange/30 hover:border-neon-orange/60 opacity-90",
@@ -56,7 +55,52 @@ export function CompetitorAdCard({ ad }: Props) {
             </>
           )}
         </div>
-        <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0 group-hover:text-neon-cyan transition-colors" />
+        <a
+          href={ad.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-neon-cyan transition-colors"
+          title="Abrir na Biblioteca de Anúncios"
+        >
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+
+      {/* Preview */}
+      <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-primary/15 bg-background/40">
+        {src ? (
+          <img
+            src={src}
+            alt={`Preview do anúncio ${titulo}`}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-neon-cyan hover:bg-neon-cyan/5 transition-colors disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-[10px] uppercase tracking-widest">Gerando preview…</span>
+              </>
+            ) : error ? (
+              <>
+                <ImageIcon className="h-5 w-5 text-neon-orange" />
+                <span className="text-[10px] text-neon-orange/90 px-3 text-center">{error}</span>
+                <span className="text-[9px] uppercase tracking-widest">Tentar novamente</span>
+              </>
+            ) : (
+              <>
+                <ImageIcon className="h-5 w-5" />
+                <span className="text-[10px] uppercase tracking-widest">Ver preview</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Title + text */}
@@ -97,6 +141,6 @@ export function CompetitorAdCard({ ad }: Props) {
           </div>
         )}
       </div>
-    </a>
+    </div>
   );
 }
