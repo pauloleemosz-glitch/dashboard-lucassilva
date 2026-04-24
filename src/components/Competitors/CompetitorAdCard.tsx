@@ -99,5 +99,4 @@ export function CompetitorAdCard({ ad }: Props) {
       </div>
     </a>
   );
-});
-CompetitorAdCard.displayName = "CompetitorAdCard";
+}
