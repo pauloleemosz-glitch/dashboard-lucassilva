@@ -14,6 +14,7 @@ export interface CompetitorAd {
   descricao: string;
   plataformas: string[];
   link: string;
+  driveLink: string;
   firstSeen: Date | null;
   lastSeen: Date | null;
   status: CompetitorAdStatus;
