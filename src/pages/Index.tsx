@@ -346,14 +346,14 @@ function Dashboard() {
             </Reveal>
           </div>
 
-          {/* Creatives table */}
-          <Reveal direction="up" amount={0.1}>
-            <CreativeTable rows={filtered} />
-          </Reveal>
-
           {/* Competitors */}
           <Reveal direction="up" amount={0.1}>
             <CompetitorsSection />
+          </Reveal>
+
+          {/* Creatives table */}
+          <Reveal direction="up" amount={0.1}>
+            <CreativeTable rows={filtered} />
           </Reveal>
 
           {/* Footer */}
