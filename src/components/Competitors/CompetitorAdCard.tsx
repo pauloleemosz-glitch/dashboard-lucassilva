@@ -22,7 +22,9 @@ export function CompetitorAdCard({ ad }: Props) {
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
-  const { src, loading, error, load } = useAdPreview(ad.adId, ad.link);
+  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link);
+  const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
+  const mediaVideo = creative?.videoUrl;
 
   return (
     <div
@@ -68,12 +70,22 @@ export function CompetitorAdCard({ ad }: Props) {
 
       {/* Preview */}
       <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden bg-background/60">
-        {src ? (
+        {mediaVideo ? (
+          <video
+            src={mediaVideo}
+            poster={mediaImg}
+            muted
+            loop
+            playsInline
+            autoPlay
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : mediaImg ? (
           <img
-            src={src}
-            alt={`Preview do anúncio ${titulo}`}
+            src={mediaImg}
+            alt={`Criativo do anúncio ${titulo}`}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover object-top"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         ) : loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
