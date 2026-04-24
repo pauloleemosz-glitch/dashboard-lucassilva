@@ -9,6 +9,7 @@ import { ConversionFunnel } from "@/components/ConversionFunnel";
 import { MatrixBackground } from "@/components/MatrixBackground";
 import { Reveal } from "@/components/Reveal";
 import { CreativeTable } from "@/components/CreativeTable";
+import { CompetitorsSection } from "@/components/Competitors/CompetitorsSection";
 import { InvestmentClicks } from "@/components/Charts/InvestmentClicks";
 import { ReachFrequency } from "@/components/Charts/ReachFrequency";
 import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
@@ -348,6 +349,11 @@ function Dashboard() {
           {/* Creatives table */}
           <Reveal direction="up" amount={0.1}>
             <CreativeTable rows={filtered} />
+          </Reveal>
+
+          {/* Competitors */}
+          <Reveal direction="up" amount={0.1}>
+            <CompetitorsSection />
           </Reveal>
 
           {/* Footer */}

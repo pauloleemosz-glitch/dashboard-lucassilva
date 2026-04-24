@@ -59,3 +59,26 @@ export function extractDriveId(url: string | null | undefined): string | null {
   if (m2) return m2[1];
   return null;
 }
+
+/** Extracts the numeric ad id from a Facebook Ad Library link. */
+export function extractAdId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = /[?&]id=(\d+)/.exec(url);
+  return m ? m[1] : null;
+}
+
+/** Splits "FACEBOOK, INSTAGRAM" into a normalized array of platforms. */
+export function parsePlatforms(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+/** Whole-day difference between two dates (a - b). Returns 0 if either is null. */
+export function daysBetween(a: Date | null, b: Date | null): number {
+  if (!a || !b) return 0;
+  const ms = a.getTime() - b.getTime();
+  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
