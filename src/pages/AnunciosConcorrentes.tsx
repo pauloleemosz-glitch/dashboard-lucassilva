@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { MatrixBackground } from "@/components/MatrixBackground";
 import { CompetitorsSection } from "@/components/Competitors/CompetitorsSection";
 import { TopNav } from "@/components/TopNav";
 import logo from "@/assets/logo.svg";
@@ -7,7 +6,6 @@ import logo from "@/assets/logo.svg";
 export default function AnunciosConcorrentes() {
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-5 relative">
-      <MatrixBackground />
       <motion.header
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
