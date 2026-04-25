@@ -17,7 +17,7 @@ import {
 import { IntelCompetitorBlock } from "./IntelCompetitorBlock";
 import { formatNumber } from "@/utils/parsers";
 
-const COMPETITORS = ["Rafael Toro", "Edgar Abreu", "Meu Certificado"] as const;
+
 
 export function IntelDashboard() {
   const datas = useDatasDisponiveis();
