@@ -9,7 +9,7 @@ import { ConversionFunnel } from "@/components/ConversionFunnel";
 import { MatrixBackground } from "@/components/MatrixBackground";
 import { Reveal } from "@/components/Reveal";
 import { CreativeTable } from "@/components/CreativeTable";
-import { CompetitorsSection } from "@/components/Competitors/CompetitorsSection";
+import { TopNav } from "@/components/TopNav";
 import { InvestmentClicks } from "@/components/Charts/InvestmentClicks";
 import { ReachFrequency } from "@/components/Charts/ReachFrequency";
 import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
@@ -216,6 +216,8 @@ function Dashboard() {
         />
       </motion.header>
 
+      <TopNav />
+
       {/* Filters */}
       <GlobalFilters
         cursos={cursos}
@@ -350,9 +352,6 @@ function Dashboard() {
           <Reveal direction="up" amount={0.1}>
             <CreativeTable rows={filtered} />
           </Reveal>
-
-          {/* Competitors */}
-          <CompetitorsSection />
 
           {/* Footer */}
           <Reveal direction="up">
