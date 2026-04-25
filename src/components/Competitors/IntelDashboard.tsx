@@ -129,8 +129,8 @@ export function IntelDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {COMPETITORS.map((name) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {competitors.map((name) => {
               const entry = byCompetitor.get(name)!;
               const totalAds = entry.ads?.length ?? 0;
               const campanhas = entry.campaigns?.length ?? 0;
