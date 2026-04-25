@@ -72,8 +72,8 @@ export function DragCarousel({ children, className }: Props) {
         onPointerCancel={endDrag}
         onClickCapture={onClickCapture}
         className={cn(
-          "flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-1 px-1 snap-x snap-mandatory",
-          "[scrollbar-width:thin] select-none touch-pan-y",
+          "flex gap-3 overflow-x-auto overflow-y-hidden pb-3 -mx-1 px-1 snap-x snap-mandatory",
+          "scrollbar-neon select-none touch-pan-y",
           isDragging ? "cursor-grabbing scroll-auto" : "cursor-grab scroll-smooth",
         )}
         style={{ WebkitOverflowScrolling: "touch" }}
