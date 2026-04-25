@@ -18,6 +18,9 @@ export function DragCarousel({ children, className }: Props) {
   const dragState = useRef({ startX: 0, scrollLeft: 0, moved: false });
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    // Mobile/touch: let the browser's native scroll handle the gesture.
+    // Our JS drag is desktop-only (mouse/pen).
+    if (e.pointerType === "touch") return;
     const el = scrollerRef.current;
     if (!el) return;
     dragState.current = {
@@ -78,11 +81,14 @@ export function DragCarousel({ children, className }: Props) {
         )}
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        {/* Block iframe pointer events while dragging so the drag isn't intercepted */}
+        {/* On mobile, disable pointer events on iframes/links so the swipe
+            scrolls the carousel instead of being captured by Drive's iframe.
+            On desktop (md+), keep them interactive. */}
         <div
           className={cn(
             "contents",
-            isDragging && "[&_iframe]:pointer-events-none [&_a]:pointer-events-none",
+            "[&_iframe]:pointer-events-none md:[&_iframe]:pointer-events-auto",
+            isDragging && "md:[&_iframe]:pointer-events-none md:[&_a]:pointer-events-none",
           )}
         >
           {children}
