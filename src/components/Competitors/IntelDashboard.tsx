@@ -134,12 +134,17 @@ export function IntelDashboard() {
               const entry = byCompetitor.get(name)!;
               const totalAds = entry.ads?.length ?? 0;
               const campanhas = entry.campaigns?.length ?? 0;
+              const isActive = selectedComp === name;
               return (
                 <SummaryCard
                   key={name}
                   name={name}
                   totalAds={totalAds}
                   campanhas={campanhas}
+                  active={isActive}
+                  onClick={() =>
+                    setSelectedComp((curr) => (curr === name ? "all" : name))
+                  }
                 />
               );
             })}
