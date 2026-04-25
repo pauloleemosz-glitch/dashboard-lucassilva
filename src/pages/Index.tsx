@@ -6,7 +6,7 @@ import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
 import { KPICard } from "@/components/KPICard";
 import { ConversionFunnel } from "@/components/ConversionFunnel";
-import { MatrixBackground } from "@/components/MatrixBackground";
+
 import { Reveal } from "@/components/Reveal";
 import { CreativeTable } from "@/components/CreativeTable";
 import { TopNav } from "@/components/TopNav";
@@ -198,7 +198,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-5 relative">
-      <MatrixBackground />
       {/* Header */}
       <motion.header initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="flex items-center justify-between flex-wrap gap-3">
         <div>
