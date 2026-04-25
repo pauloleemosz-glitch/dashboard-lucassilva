@@ -1,15 +1,16 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, Eye } from "lucide-react";
+import { BarChart3, Eye, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TopNav() {
   const tabs = [
     { to: "/", label: "Dashboard", icon: BarChart3 },
-    { to: "/concorrentes", label: "Concorrentes", icon: Eye },
+    { to: "/anuncios-concorrentes", label: "Anúncios Concorrentes", icon: Eye },
+    { to: "/campanhas-concorrentes", label: "Campanhas Concorrentes", icon: Megaphone },
   ];
 
   return (
-    <nav className="flex items-center gap-1 p-1 rounded-xl glass-card w-fit">
+    <nav className="flex items-center gap-1 p-1 rounded-xl glass-card w-fit flex-wrap">
       {tabs.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}

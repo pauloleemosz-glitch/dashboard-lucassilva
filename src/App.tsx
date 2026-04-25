@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
-import Competitors from "./pages/Competitors.tsx";
+import AnunciosConcorrentes from "./pages/AnunciosConcorrentes.tsx";
+import CampanhasConcorrentes from "./pages/CampanhasConcorrentes.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -17,7 +18,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/concorrentes" element={<Competitors />} />
+          <Route path="/anuncios-concorrentes" element={<AnunciosConcorrentes />} />
+          <Route path="/campanhas-concorrentes" element={<CampanhasConcorrentes />} />
+          {/* Redirect legacy route */}
+          <Route path="/concorrentes" element={<AnunciosConcorrentes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
