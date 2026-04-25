@@ -141,6 +141,10 @@
     text-shadow: 0 0 10px hsl(var(--neon-orange) / 0.5);
   }
 
+  .neon-text-white-glow {
+    color: hsl(0 0% 100%);
+    animation: neon-white-pulse 2.4s ease-in-out infinite;
+  }
   .neon-border-pulse {
     border: 1px solid hsl(var(--neon-cyan));
     box-shadow:
@@ -175,7 +179,20 @@
   100% { background-position: -200% 0; }
 }
 
-/* Ambient subtle animations — always on, non-distracting */
+@keyframes neon-white-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 6px hsl(0 0% 100% / 0.6),
+      0 0 14px hsl(var(--neon-cyan) / 0.5),
+      0 0 28px hsl(var(--neon-cyan) / 0.35);
+  }
+  50% {
+    text-shadow:
+      0 0 10px hsl(0 0% 100% / 0.95),
+      0 0 24px hsl(var(--neon-cyan) / 0.85),
+      0 0 44px hsl(var(--neon-purple) / 0.55);
+  }
+}
 @keyframes float-soft {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-4px); }
