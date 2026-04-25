@@ -37,29 +37,34 @@ export function IntelDashboard() {
   const isLoading = datas.isLoading || intel.isLoading || ads.isLoading;
   const error = datas.error || intel.error || ads.error;
 
+  // Derivar dinamicamente a lista de concorrentes a partir dos dados
+  const competitors = useMemo(() => {
+    const set = new Set<string>();
+    intel.data?.forEach((c) => c.concorrente && set.add(c.concorrente.trim()));
+    ads.data?.forEach((a) => a.concorrente && set.add(a.concorrente.trim()));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [intel.data, ads.data]);
+
   // agrupar por concorrente
   const byCompetitor = useMemo(() => {
     const map = new Map<string, { campaigns: typeof intel.data; ads: typeof ads.data }>();
-    for (const name of COMPETITORS) {
+    for (const name of competitors) {
       map.set(name, { campaigns: [], ads: [] });
     }
     intel.data?.forEach((c) => {
-      const entry = map.get(c.concorrente);
+      const entry = map.get(c.concorrente.trim());
       if (entry) entry.campaigns!.push(c);
     });
     ads.data?.forEach((a) => {
-      const entry = map.get(a.concorrente);
+      const entry = map.get(a.concorrente.trim());
       if (entry) entry.ads!.push(a);
     });
     return map;
-  }, [intel.data, ads.data]);
+  }, [intel.data, ads.data, competitors]);
 
   const visibleCompetitors = useMemo(
-    () =>
-      selectedComp === "all"
-        ? (COMPETITORS as readonly string[])
-        : [selectedComp],
-    [selectedComp],
+    () => (selectedComp === "all" ? competitors : [selectedComp]),
+    [selectedComp, competitors],
   );
 
   return (
