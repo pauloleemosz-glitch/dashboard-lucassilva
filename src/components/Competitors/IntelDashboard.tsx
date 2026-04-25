@@ -97,7 +97,7 @@ export function IntelDashboard() {
           </SelectTrigger>
           <SelectContent className="glass-card border-primary/30">
             <SelectItem value="all">Todos os concorrentes</SelectItem>
-            {COMPETITORS.map((c) => (
+            {competitors.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
