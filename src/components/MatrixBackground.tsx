@@ -51,11 +51,18 @@ export function MatrixBackground() {
 
     let raf = 0;
     let last = 0;
-    const targetFps = 24;
+    let paused = false;
+    const targetFps = 20;
     const interval = 1000 / targetFps;
+
+    const onVisibility = () => {
+      paused = document.hidden;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     const draw = (t: number) => {
       raf = requestAnimationFrame(draw);
+      if (paused) return;
       if (t - last < interval) return;
       last = t;
 
@@ -67,27 +74,36 @@ export function MatrixBackground() {
       ctx.fillRect(0, 0, w, h);
 
       ctx.font = `${fontSize}px "Space Grotesk", monospace`;
+      ctx.shadowBlur = 0;
 
+      // Pass 1: regular chars (no shadow — much cheaper)
+      ctx.fillStyle = `hsl(${green})`;
       for (let i = 0; i < columns; i++) {
+        if (tints[i] === 1) continue;
         const ch = chars.charAt(Math.floor(Math.random() * chars.length));
-        const x = i * fontSize;
+        ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+      }
+
+      // Pass 2: leader chars only (with glow — kept rare for perf)
+      ctx.shadowColor = `hsl(${greenBright})`;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = `hsl(${greenBright})`;
+      for (let i = 0; i < columns; i++) {
+        if (tints[i] !== 1) continue;
+        const ch = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+      }
+      ctx.shadowBlur = 0;
+
+      // Advance + reset
+      for (let i = 0; i < columns; i++) {
         const y = drops[i] * fontSize;
-
-        const color = tints[i] === 1 ? greenBright : green;
-        // Bright leading char
-        ctx.shadowColor = `hsl(${color})`;
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = `hsla(${color}, 1)`;
-        ctx.fillText(ch, x, y);
-
-        // Reset when off-screen
         if (y > h && Math.random() > 0.975) {
           drops[i] = Math.random() * -20;
           tints[i] = Math.random() < 0.2 ? 1 : 0;
         }
         drops[i] += speeds[i];
       }
-      ctx.shadowBlur = 0;
     };
 
     raf = requestAnimationFrame(draw);
@@ -95,6 +111,7 @@ export function MatrixBackground() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
