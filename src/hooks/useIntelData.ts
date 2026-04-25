@@ -29,6 +29,9 @@ export interface CompetitorAdRow {
   titulo: string;
 }
 
+// Auto-refresh interval (2 minutes) so new competitors appear without manual reload
+const REFETCH_INTERVAL = 2 * 60 * 1000;
+
 export function useDatasDisponiveis() {
   return useQuery({
     queryKey: ["intel", "datas"],
@@ -38,7 +41,9 @@ export function useDatasDisponiveis() {
       const data = (await res.json()) as string[];
       return [...data].sort().reverse();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    refetchInterval: REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -51,7 +56,9 @@ export function useIntelByDate(data: string | undefined) {
       if (!res.ok) throw new Error(`Erro inteligência (${res.status})`);
       return res.json();
     },
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchInterval: REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -64,7 +71,9 @@ export function useConcorrentesAds(data: string | undefined) {
       if (!res.ok) throw new Error(`Erro concorrentes (${res.status})`);
       return res.json();
     },
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchInterval: REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
   });
 }
 
