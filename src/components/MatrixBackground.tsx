@@ -18,18 +18,18 @@ export function MatrixBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vivid neon green — classic Matrix look
-    const green = "135 100% 55%";
-    const greenBright = "120 100% 70%";
+    // Neon blue palette — falling sharks
+    const blue = "210 100% 60%";
+    const blueBright = "195 100% 75%";
 
-    const fontSize = 14;
+    const fontSize = 18;
     let columns = 0;
     let drops: number[] = [];
     let speeds: number[] = [];
-    let tints: number[] = []; // 0 = green, 1 = bright green leader
+    let tints: number[] = []; // 0 = blue, 1 = bright blue leader
 
-    const chars =
-      "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF";
+    // Small shark emojis — mix variants for visual interest
+    const chars = "🦈";
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
