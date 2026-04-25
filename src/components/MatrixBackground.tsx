@@ -73,21 +73,21 @@ export function MatrixBackground() {
       ctx.fillStyle = "hsla(220, 60%, 5%, 0.08)";
       ctx.fillRect(0, 0, w, h);
 
-      ctx.font = `${fontSize}px "Space Grotesk", monospace`;
+      ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
       ctx.shadowBlur = 0;
 
-      // Pass 1: regular chars (no shadow — much cheaper)
-      ctx.fillStyle = `hsl(${green})`;
+      // Pass 1: regular sharks (no shadow — much cheaper)
+      ctx.fillStyle = `hsl(${blue})`;
       for (let i = 0; i < columns; i++) {
         if (tints[i] === 1) continue;
         const ch = chars.charAt(Math.floor(Math.random() * chars.length));
         ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
       }
 
-      // Pass 2: leader chars only (with glow — kept rare for perf)
-      ctx.shadowColor = `hsl(${greenBright})`;
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = `hsl(${greenBright})`;
+      // Pass 2: leader sharks only (with cyan glow — kept rare for perf)
+      ctx.shadowColor = `hsl(${blueBright})`;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = `hsl(${blueBright})`;
       for (let i = 0; i < columns; i++) {
         if (tints[i] !== 1) continue;
         const ch = chars.charAt(Math.floor(Math.random() * chars.length));
