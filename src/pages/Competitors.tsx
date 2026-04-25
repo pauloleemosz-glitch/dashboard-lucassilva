@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { MatrixBackground } from "@/components/MatrixBackground";
-import { CompetitorsSection } from "@/components/Competitors/CompetitorsSection";
+import { IntelDashboard } from "@/components/Competitors/IntelDashboard";
 import { TopNav } from "@/components/TopNav";
 import logo from "@/assets/logo.svg";
 
@@ -31,7 +31,7 @@ export default function Competitors() {
 
       <TopNav />
 
-      <CompetitorsSection />
+      <IntelDashboard />
     </div>
   );
 }
