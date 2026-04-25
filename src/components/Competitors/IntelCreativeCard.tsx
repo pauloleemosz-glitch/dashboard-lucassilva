@@ -1,11 +1,31 @@
 import { ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { memo, useEffect, useRef, useState } from "react";
 import { extractDriveId, firstDriveLink, CompetitorAdRow } from "@/hooks/useIntelData";
 
-export function IntelCreativeCard({ ad }: { ad: CompetitorAdRow }) {
+function IntelCreativeCardImpl({ ad }: { ad: CompetitorAdRow }) {
   const link = firstDriveLink(ad.link_drive);
   const id = link ? extractDriveId(link) : null;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current || shouldLoad) return;
+    const el = containerRef.current;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldLoad(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shouldLoad]);
+
   if (!id) return null;
 
   const inicio = ad.inicio ? new Date(ad.inicio.replace(" ", "T")) : null;
@@ -14,15 +34,24 @@ export function IntelCreativeCard({ ad }: { ad: CompetitorAdRow }) {
     : [];
 
   return (
-    <div className="shrink-0 w-[240px] glass-card rounded-xl overflow-hidden border border-primary/15 hover:border-primary/40 transition-colors flex flex-col">
+    <div
+      ref={containerRef}
+      className="shrink-0 w-[240px] glass-card rounded-xl overflow-hidden border border-primary/15 hover:border-primary/40 transition-colors flex flex-col"
+    >
       <div className="aspect-square bg-black relative overflow-hidden">
-        <iframe
-          src={`https://drive.google.com/file/d/${id}/preview`}
-          className="absolute inset-0 w-full h-full border-0"
-          allow="autoplay"
-          loading="lazy"
-          title={`creative-${id}`}
-        />
+        {shouldLoad ? (
+          <iframe
+            src={`https://drive.google.com/file/d/${id}/preview`}
+            className="absolute inset-0 w-full h-full border-0"
+            allow="autoplay"
+            loading="lazy"
+            title={`creative-${id}`}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-neon-cyan animate-spin" />
+          </div>
+        )}
       </div>
       <div className="p-3 space-y-2 flex-1 flex flex-col">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -54,3 +83,5 @@ export function IntelCreativeCard({ ad }: { ad: CompetitorAdRow }) {
     </div>
   );
 }
+
+export const IntelCreativeCard = memo(IntelCreativeCardImpl);
