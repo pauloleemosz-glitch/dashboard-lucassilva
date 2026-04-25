@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { MatrixBackground } from "@/components/MatrixBackground";
-import { IntelDashboard } from "@/components/Competitors/IntelDashboard";
+import { CompetitorsSection } from "@/components/Competitors/CompetitorsSection";
 import { TopNav } from "@/components/TopNav";
 import logo from "@/assets/logo.svg";
 
-export default function Competitors() {
+export default function AnunciosConcorrentes() {
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-5 relative">
       <MatrixBackground />
@@ -16,7 +16,7 @@ export default function Competitors() {
       >
         <div>
           <h1 className="text-2xl md:text-3xl font-light tracking-tight gradient-text-anim">
-            META // INTELIGÊNCIA COMPETITIVA
+            META // ANÚNCIOS DOS CONCORRENTES
           </h1>
         </div>
         <motion.img
@@ -31,7 +31,7 @@ export default function Competitors() {
 
       <TopNav />
 
-      <IntelDashboard />
+      <CompetitorsSection />
     </div>
   );
 }

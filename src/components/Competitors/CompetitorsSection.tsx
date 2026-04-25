@@ -65,8 +65,8 @@ export function CompetitorsSection() {
             </div>
           ) : (
             <div className="space-y-3">
-              {data.groups.map((g, i) => (
-                <CompetitorGroup key={g.concorrente} group={g} defaultOpen={i === 0} />
+              {data.groups.map((g) => (
+                <CompetitorGroup key={g.concorrente} group={g} defaultOpen={false} />
               ))}
             </div>
           )}
