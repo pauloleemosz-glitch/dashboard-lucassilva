@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-const API_BASE = "http://34.66.142.94:5001";
+const API_BASE = "https://ethernet-qualified-nomination-remembered.trycloudflare.com";
 
 export interface IntelCampaign {
   concorrente: string;
