@@ -134,12 +134,17 @@ export function IntelDashboard() {
               const entry = byCompetitor.get(name)!;
               const totalAds = entry.ads?.length ?? 0;
               const campanhas = entry.campaigns?.length ?? 0;
+              const isActive = selectedComp === name;
               return (
                 <SummaryCard
                   key={name}
                   name={name}
                   totalAds={totalAds}
                   campanhas={campanhas}
+                  active={isActive}
+                  onClick={() =>
+                    setSelectedComp((curr) => (curr === name ? "all" : name))
+                  }
                 />
               );
             })}
@@ -177,14 +182,31 @@ function SummaryCard({
   name,
   totalAds,
   campanhas,
+  active = false,
+  onClick,
 }: {
   name: string;
   totalAds: number;
   campanhas: number;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <div className="glass-card rounded-xl p-4 flex items-center gap-3 border border-primary/15 hover:border-primary/40 transition-colors">
-      <div className="p-2 rounded-lg bg-background/40 text-neon-purple">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`glass-card rounded-xl p-4 flex items-center gap-3 border text-left w-full transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 ${
+        active
+          ? "border-neon-cyan/70 shadow-[0_0_24px_-6px_hsl(var(--neon-cyan)/0.55)] -translate-y-0.5"
+          : "border-primary/15 hover:border-primary/40 hover:-translate-y-0.5"
+      }`}
+    >
+      <div
+        className={`p-2 rounded-lg bg-background/40 transition-colors ${
+          active ? "text-neon-cyan" : "text-neon-purple"
+        }`}
+      >
         <Users className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
@@ -212,6 +234,7 @@ function SummaryCard({
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
+
