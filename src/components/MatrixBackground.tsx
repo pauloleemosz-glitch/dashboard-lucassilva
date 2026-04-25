@@ -123,34 +123,26 @@ export function MatrixBackground() {
       ctx.fillStyle = "hsla(220, 60%, 5%, 0.08)";
       ctx.fillRect(0, 0, w, h);
 
-      ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-      ctx.shadowBlur = 0;
+      const colWidth = fontSize + 6;
 
-      // Pass 1: regular sharks (no shadow — much cheaper)
-      ctx.fillStyle = `hsl(${blue})`;
+      // Pass 1: regular sharks (cheap drawImage)
       for (let i = 0; i < columns; i++) {
         if (tints[i] === 1) continue;
-        const ch = chars.charAt(Math.floor(Math.random() * chars.length));
-        ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+        ctx.drawImage(sprite, i * colWidth, drops[i] * fontSize, fontSize, fontSize / 2);
       }
 
-      // Pass 2: leader sharks only (with cyan glow — kept rare for perf)
-      ctx.shadowColor = `hsl(${blueBright})`;
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = `hsl(${blueBright})`;
+      // Pass 2: leader sharks (already pre-rendered with glow)
       for (let i = 0; i < columns; i++) {
         if (tints[i] !== 1) continue;
-        const ch = chars.charAt(Math.floor(Math.random() * chars.length));
-        ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+        ctx.drawImage(spriteBright, i * colWidth, drops[i] * fontSize, fontSize, fontSize / 2);
       }
-      ctx.shadowBlur = 0;
 
       // Advance + reset
       for (let i = 0; i < columns; i++) {
         const y = drops[i] * fontSize;
         if (y > h && Math.random() > 0.975) {
           drops[i] = Math.random() * -20;
-          tints[i] = Math.random() < 0.2 ? 1 : 0;
+          tints[i] = Math.random() < 0.12 ? 1 : 0;
         }
         drops[i] += speeds[i];
       }
