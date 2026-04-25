@@ -19,7 +19,7 @@ export function IntelCompetitorBlock({ concorrente, campaigns, ads }: Props) {
     <section className="space-y-3">
       <header className="flex items-center gap-3">
         <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground neon-text-purple">
+        <h2 className="text-xl md:text-2xl font-semibold tracking-tight neon-text-white-glow">
           {concorrente}
         </h2>
         <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
