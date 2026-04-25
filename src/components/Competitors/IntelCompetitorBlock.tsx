@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { CompetitorAdRow, IntelCampaign, firstDriveLink } from "@/hooks/useIntelData";
 import { IntelCreativeCard } from "./IntelCreativeCard";
+import { DragCarousel } from "./DragCarousel";
 
 interface Props {
   concorrente: string;
@@ -82,13 +83,13 @@ export function IntelCompetitorBlock({ concorrente, campaigns, ads }: Props) {
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
             Criativos ({adsComCriativo.length})
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scroll-smooth snap-x">
+          <DragCarousel>
             {adsComCriativo.map((ad, i) => (
-              <div key={i} className="snap-start">
+              <div key={i} className="snap-start shrink-0">
                 <IntelCreativeCard ad={ad} />
               </div>
             ))}
-          </div>
+          </DragCarousel>
         </div>
       )}
     </section>
