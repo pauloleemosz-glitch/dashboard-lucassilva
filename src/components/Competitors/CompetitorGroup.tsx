@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CompetitorGroup as CompetitorGroupType } from "@/hooks/useCompetitorsData";
 import { AnuncioDesativado } from "@/hooks/useAnunciosDesativados";
 import { CompetitorAdCard } from "./CompetitorAdCard";
-import { cn } from "@/lib/utils";
 
 interface Props {
   group: CompetitorGroupType;
@@ -11,10 +9,7 @@ interface Props {
   desativadosReal?: AnuncioDesativado[];
 }
 
-type Filter = "todos" | "ativos" | "desativados";
-
 export function CompetitorGroup({ group, defaultOpen = false, desativadosReal = [] }: Props) {
-  const [filter, setFilter] = useState<Filter>("ativos");
 
   const offCount = desativadosReal.length;
 
