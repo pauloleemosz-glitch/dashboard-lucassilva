@@ -82,8 +82,26 @@ export function CompetitorsSection() {
             </div>
           ) : (
             <div className="space-y-3">
+            <SummaryKpi label="Concorrentes" value={data.totals.concorrentes} icon={Users} color="cyan" />
+            <SummaryKpi label="Anúncios" value={data.totals.total} icon={Eye} color="purple" />
+            <SummaryKpi label="Ativos" value={data.totals.ativos} icon={Activity} color="cyan" pulse />
+            <SummaryKpi label="Desativados" value={totalDesativadosReal} icon={XCircle} color="orange" />
+          </div>
+
+          {/* Groups */}
+          {data.groups.length === 0 ? (
+            <div className="glass-card rounded-xl p-8 text-center text-muted-foreground text-sm">
+              Nenhum anúncio de concorrente encontrado.
+            </div>
+          ) : (
+            <div className="space-y-3">
               {data.groups.map((g) => (
-                <CompetitorGroup key={g.concorrente} group={g} defaultOpen={false} />
+                <CompetitorGroup
+                  key={g.concorrente}
+                  group={g}
+                  defaultOpen={false}
+                  desativadosReal={desativadosByCompetitor.get(g.concorrente) ?? []}
+                />
               ))}
             </div>
           )}
