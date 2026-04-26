@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CompetitorGroup as CompetitorGroupType } from "@/hooks/useCompetitorsData";
 import { AnuncioDesativado } from "@/hooks/useAnunciosDesativados";
 import { CompetitorAdCard } from "./CompetitorAdCard";
-import { cn } from "@/lib/utils";
 
 interface Props {
   group: CompetitorGroupType;
@@ -11,19 +9,15 @@ interface Props {
   desativadosReal?: AnuncioDesativado[];
 }
 
-type Filter = "todos" | "ativos" | "desativados";
-
 export function CompetitorGroup({ group, defaultOpen = false, desativadosReal = [] }: Props) {
-  const [filter, setFilter] = useState<Filter>("ativos");
 
   const offCount = desativadosReal.length;
 
-  const ads =
-    filter === "ativos"
-      ? group.ativos
-      : filter === "desativados"
-      ? group.desativados
-      : [...group.ativos, ...group.desativados];
+  // Cards visuais mostram somente os anúncios ATIVOS vindos da planilha.
+  // Os desativados confirmados (API) são exibidos na tabela abaixo —
+  // a heurística antiga (group.desativados) não é mais usada para evitar
+  // marcar como off anúncios que ainda estão ativos na biblioteca do Meta.
+  const ads = group.ativos;
 
   return (
     <Accordion
@@ -56,31 +50,13 @@ export function CompetitorGroup({ group, defaultOpen = false, desativadosReal = 
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-5 pb-5 space-y-5">
-          {/* Filter pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {(["ativos", "desativados", "todos"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border transition-colors",
-                  filter === f
-                    ? "border-neon-cyan text-neon-cyan bg-neon-cyan/10"
-                    : "border-primary/20 text-muted-foreground hover:text-neon-cyan hover:border-neon-cyan/40",
-                )}
-              >
-                {f === "ativos"
-                  ? `Ativos (${group.ativos.length})`
-                  : f === "desativados"
-                  ? `Desativados (${group.desativados.length})`
-                  : `Todos (${group.ativos.length + group.desativados.length})`}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span>{group.ativos.length} anúncios ativos</span>
           </div>
 
           {ads.length === 0 ? (
             <div className="text-center text-xs text-muted-foreground py-8">
-              Nenhum anúncio para este filtro.
+              Nenhum anúncio ativo no momento.
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
