@@ -18,12 +18,11 @@ export function CompetitorGroup({ group, defaultOpen = false, desativadosReal = 
 
   const offCount = desativadosReal.length;
 
-  const ads =
-    filter === "ativos"
-      ? group.ativos
-      : filter === "desativados"
-      ? group.desativados
-      : [...group.ativos, ...group.desativados];
+  // Cards visuais mostram somente os anúncios ATIVOS vindos da planilha.
+  // Os desativados confirmados (API) são exibidos na tabela abaixo —
+  // a heurística antiga (group.desativados) não é mais usada para evitar
+  // marcar como off anúncios que ainda estão ativos na biblioteca do Meta.
+  const ads = group.ativos;
 
   return (
     <Accordion
