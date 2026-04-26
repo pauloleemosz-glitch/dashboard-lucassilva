@@ -1,18 +1,22 @@
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CompetitorGroup as CompetitorGroupType } from "@/hooks/useCompetitorsData";
+import { AnuncioDesativado } from "@/hooks/useAnunciosDesativados";
 import { CompetitorAdCard } from "./CompetitorAdCard";
 import { cn } from "@/lib/utils";
 
 interface Props {
   group: CompetitorGroupType;
   defaultOpen?: boolean;
+  desativadosReal?: AnuncioDesativado[];
 }
 
 type Filter = "todos" | "ativos" | "desativados";
 
-export function CompetitorGroup({ group, defaultOpen = false }: Props) {
+export function CompetitorGroup({ group, defaultOpen = false, desativadosReal = [] }: Props) {
   const [filter, setFilter] = useState<Filter>("ativos");
+
+  const offCount = desativadosReal.length;
 
   const ads =
     filter === "ativos"
@@ -43,15 +47,17 @@ export function CompetitorGroup({ group, defaultOpen = false }: Props) {
               <span className="px-2 py-1 rounded-full text-neon-cyan border border-neon-cyan/40 bg-neon-cyan/5">
                 {group.ativos.length} ativos
               </span>
-              <span className="px-2 py-1 rounded-full text-neon-orange border border-neon-orange/30 bg-neon-orange/5">
-                {group.desativados.length} off
-              </span>
+              {offCount > 0 && (
+                <span className="px-2 py-1 rounded-full text-neon-orange border border-neon-orange/30 bg-neon-orange/5">
+                  {offCount} off
+                </span>
+              )}
             </div>
           </div>
         </AccordionTrigger>
-        <AccordionContent className="px-5 pb-5">
+        <AccordionContent className="px-5 pb-5 space-y-5">
           {/* Filter pills */}
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {(["ativos", "desativados", "todos"] as const).map((f) => (
               <button
                 key={f}
@@ -81,6 +87,50 @@ export function CompetitorGroup({ group, defaultOpen = false }: Props) {
               {ads.map((ad) => (
                 <CompetitorAdCard key={ad.adId} ad={ad} />
               ))}
+            </div>
+          )}
+
+          {/* Sub-lista de desativados confirmados (API) */}
+          {offCount > 0 && (
+            <div className="rounded-xl border border-neon-orange/20 bg-neon-orange/5 overflow-hidden">
+              <div className="px-4 py-2 flex items-center gap-2 border-b border-neon-orange/20">
+                <span className="text-[10px] uppercase tracking-widest text-neon-orange font-medium">
+                  Desativados confirmados ({offCount})
+                </span>
+                <span className="text-[10px] text-muted-foreground tracking-wider">
+                  ausentes por 3+ dias consecutivos
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-background/40 text-muted-foreground uppercase tracking-widest text-[10px]">
+                    <tr>
+                      <th className="text-left px-3 py-2">Data Desativação</th>
+                      <th className="text-left px-3 py-2">Última vez ativo</th>
+                      <th className="text-right px-3 py-2">Dias ativo</th>
+                      <th className="text-left px-3 py-2">Título</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neon-orange/10">
+                    {desativadosReal.map((d, i) => (
+                      <tr key={i} className="hover:bg-neon-orange/5">
+                        <td className="px-3 py-2 whitespace-nowrap text-neon-orange">
+                          {d.data_desativacao || "—"}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
+                          {d.ultima_vez_ativo || "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                          {d.dias_ativo ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 max-w-[420px] truncate text-foreground/90">
+                          {d.titulo || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </AccordionContent>
