@@ -2,11 +2,28 @@ import { Eye, Activity, XCircle, Users, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompetitorsData } from "@/hooks/useCompetitorsData";
+import { useAnunciosDesativados, AnuncioDesativado } from "@/hooks/useAnunciosDesativados";
+import { useMemo } from "react";
 import { CompetitorGroup } from "./CompetitorGroup";
 import { formatNumber } from "@/utils/parsers";
 
 export function CompetitorsSection() {
   const { data, isLoading, error, refetch } = useCompetitorsData();
+  const desativados = useAnunciosDesativados();
+
+  const desativadosByCompetitor = useMemo(() => {
+    const map = new Map<string, AnuncioDesativado[]>();
+    (desativados.data ?? []).forEach((a) => {
+      const key = (a.concorrente || "").trim();
+      if (!key) return;
+      const arr = map.get(key) ?? [];
+      arr.push(a);
+      map.set(key, arr);
+    });
+    return map;
+  }, [desativados.data]);
+
+  const totalDesativadosReal = desativados.data?.length ?? 0;
 
   return (
     <section className="space-y-4">
