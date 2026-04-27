@@ -78,20 +78,28 @@ export function IntelCompetitorBlock({ concorrente, campaigns, ads, isOwn }: Pro
         </div>
       )}
 
-      {/* Galeria de criativos */}
-      {adsComCriativo.length > 0 && (
-        <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+      {/* Galeria de criativos — oculta para LS Certificacoes (mostra só contagem) */}
+      {isOwn ? (
+        adsComCriativo.length > 0 && (
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Criativos ({adsComCriativo.length})
           </div>
-          <DragCarousel>
-            {adsComCriativo.map((ad, i) => (
-              <div key={i} className="snap-start shrink-0">
-                <IntelCreativeCard ad={ad} />
-              </div>
-            ))}
-          </DragCarousel>
-        </div>
+        )
+      ) : (
+        adsComCriativo.length > 0 && (
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+              Criativos ({adsComCriativo.length})
+            </div>
+            <DragCarousel>
+              {adsComCriativo.map((ad, i) => (
+                <div key={i} className="snap-start shrink-0">
+                  <IntelCreativeCard ad={ad} />
+                </div>
+              ))}
+            </DragCarousel>
+          </div>
+        )
       )}
     </section>
   );
