@@ -32,8 +32,8 @@ export function CompetitorAdCard({ ad, highlight }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const currentDriveId = driveIds[currentIdx];
 
-  // Only fetch Meta preview as fallback when there's no Drive media
-  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link, !hasDrive);
+  // Lazy: never auto-fetch Meta preview (rate-limit). User clicks "Carregar preview".
+  const { creative, loading, error, load } = useAdPreview(ad.adId, ad.link, false);
   const mediaImg = creative?.imageUrl ?? creative?.videoThumb;
   const mediaVideo = creative?.videoUrl;
   const snapshotUrl = creative?.snapshotUrl;
