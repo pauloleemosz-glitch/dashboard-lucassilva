@@ -46,12 +46,26 @@ async function fetchCompetitors(): Promise<{
     skipEmptyLines: true,
   });
 
-  // First pass: group rows by adId, track all extraction dates per ad
-  const adMap = new Map<string, { rows: Record<string, string>[]; extractionDates: Date[] }>();
+  // Primeira passagem: encontrar a data de extração mais recente
   let maxExtraction: Date | null = null;
 
   for (const row of parsed.data) {
-    // Suporta coluna com e sem acento e nomes alternativos
+    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
+    if (ext && (!maxExtraction || ext > maxExtraction)) maxExtraction = ext;
+  }
+
+  // Segunda passagem: carregar APENAS os anúncios da data mais recente
+  // (todos são ativos — capturamos com active_status=active no Apify)
+  // Anúncios de datas anteriores NÃO são considerados desativados aqui;
+  // desativados reais ficam na aba "Anuncios Desativados" via useAnunciosDesativados.
+  const adMap = new Map<string, Record<string, string>>();
+
+  for (const row of parsed.data) {
+    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
+    if (!ext || !maxExtraction) continue;
+    // Aceita qualquer linha do mesmo dia que maxExtraction
+    if (ext.getTime() !== maxExtraction.getTime()) continue;
+
     const link =
       row["Link Ad Library"] ||
       row["Link Prévia"] ||
@@ -61,63 +75,32 @@ async function fetchCompetitors(): Promise<{
     const adId = extractAdId(link) || (link ? `manual_${link.slice(-12)}` : null);
     if (!adId) continue;
 
-    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
-    if (ext && (!maxExtraction || ext > maxExtraction)) maxExtraction = ext;
-
-    const entry = adMap.get(adId);
-    if (entry) {
-      entry.rows.push(row);
-      if (ext) entry.extractionDates.push(ext);
-    } else {
-      adMap.set(adId, {
-        rows: [row],
-        extractionDates: ext ? [ext] : [],
-      });
-    }
+    // Se o mesmo ad_id aparece mais de uma vez no mesmo dia, mantém o primeiro
+    if (!adMap.has(adId)) adMap.set(adId, row);
   }
 
   const today = new Date();
   const ads: CompetitorAd[] = [];
 
-  for (const [adId, { rows, extractionDates }] of adMap) {
-    // Use the most recent row as the canonical record
-    const latest = rows.reduce((acc, r) => {
-      const a = parseDate(acc["Data Extração"] || acc["Data Extracao"] || acc["Data"]);
-      const b = parseDate(r["Data Extração"] || r["Data Extracao"] || r["Data"]);
-      if (!a) return r;
-      if (!b) return acc;
-      return b > a ? r : acc;
-    }, rows[0]);
-
-    const firstSeen = extractionDates.length
-      ? new Date(Math.min(...extractionDates.map((d) => d.getTime())))
-      : null;
-    const lastSeen = extractionDates.length
-      ? new Date(Math.max(...extractionDates.map((d) => d.getTime())))
-      : null;
-
-    const isActive =
-      lastSeen && maxExtraction ? lastSeen.getTime() === maxExtraction.getTime() : false;
-
-    const inicio = parseDate(latest["Início Anúncio"] || latest["Inicio Anuncio"]);
-    const referenceEnd = isActive ? today : lastSeen ?? today;
-    const dias = inicio ? daysBetween(referenceEnd, inicio) : 0;
+  for (const [adId, row] of adMap) {
+    const inicio = parseDate(row["Início Anúncio"] || row["Inicio Anuncio"]);
+    const dias = inicio ? daysBetween(today, inicio) : 0;
 
     ads.push({
       adId,
-      concorrente: (latest["Concorrente"] || "Sem nome").trim(),
-      pagina: (latest["Página"] || latest["Pagina"] || "").trim(),
+      concorrente: (row["Concorrente"] || "Sem nome").trim(),
+      pagina:      (row["Página"] || row["Pagina"] || "").trim(),
       inicioAnuncio: inicio,
-      titulo: (latest["Título"] || latest["Titulo"] || "").trim(),
-      texto: cleanAdText(latest["Texto"] || ""),
-      descricao: (latest["Descrição"] || latest["Descricao"] || "").trim(),
-      plataformas: parsePlatforms(latest["Plataformas"]),
-      link: latest["Link Ad Library"] || latest["Link Prévia"] || latest["Link Previa"] || "",
-      driveLink: (latest["Link Drive"] || "").trim(),
-      firstSeen,
-      lastSeen,
-      status: isActive ? "ativo" : "desativado",
-      diasAtivo: dias,
+      titulo:      (row["Título"] || row["Titulo"] || "").trim(),
+      texto:       cleanAdText(row["Texto"] || ""),
+      descricao:   (row["Descrição"] || row["Descricao"] || "").trim(),
+      plataformas: parsePlatforms(row["Plataformas"]),
+      link:        row["Link Ad Library"] || row["Link Prévia"] || row["Link Previa"] || "",
+      driveLink:   (row["Link Drive"] || "").trim(),
+      firstSeen:   maxExtraction,
+      lastSeen:    maxExtraction,
+      status:      "ativo",   // todos da última extração são ativos
+      diasAtivo:   dias,
     });
   }
 
@@ -154,15 +137,15 @@ async function fetchCompetitors(): Promise<{
     return a.concorrente.localeCompare(b.concorrente);
   });
 
+  // Todos os anúncios da última extração são ativos
   const totalAds = ads.length;
-  const ativos = ads.filter((a) => a.status === "ativo").length;
 
   return {
     groups,
     totals: {
-      total: totalAds,
-      ativos,
-      desativados: totalAds - ativos,
+      total:        totalAds,
+      ativos:       totalAds,
+      desativados:  0,   // desativados reais vêm de useAnunciosDesativados
       concorrentes: groups.length,
     },
     latestExtraction: maxExtraction,
