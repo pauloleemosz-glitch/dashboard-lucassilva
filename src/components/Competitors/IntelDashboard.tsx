@@ -1,66 +1,74 @@
-import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CalendarIcon, Eye, Megaphone, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertCircle, Eye, Megaphone, Users, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  useConcorrentesAds,
-  useDatasDisponiveis,
-  useIntelByDate,
-} from "@/hooks/useIntelData";
+import { useIntelAll, useConcorrentesAds } from "@/hooks/useIntelData";
+import { useAnunciosDesativados } from "@/hooks/useAnunciosDesativados";
 import { IntelCompetitorBlock } from "./IntelCompetitorBlock";
 import { formatNumber } from "@/utils/parsers";
 
-
-
 export function IntelDashboard() {
-  const datas = useDatasDisponiveis();
-  const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [selectedComp, setSelectedComp] = useState<string>("all");
 
-  // pré-selecionar a data mais recente
-  useEffect(() => {
-    if (!selectedDate && datas.data && datas.data.length > 0) {
-      setSelectedDate(datas.data[0]);
+  // Nomes de concorrentes que tiveram anúncios desativados
+  const desativados = useAnunciosDesativados();
+  const desativadosNomes = useMemo(() => {
+    const s = new Set<string>();
+    (desativados.data ?? []).forEach((d) => {
+      if (d.concorrente) s.add(d.concorrente.trim());
+    });
+    return s;
+  }, [desativados.data]);
+
+  // Análise mais recente por concorrente (independente de data)
+  // Some apenas se todos os anúncios do concorrente estiverem desativados
+  const intel = useIntelAll(desativadosNomes);
+
+  // Anúncios da data mais recente de cada concorrente (para exibir no bloco)
+  const ads = useConcorrentesAds(undefined);   // carrega todos, sem filtro de data
+
+  const isLoading = intel.isLoading || ads.isLoading;
+  const error     = intel.error || ads.error;
+
+  // Lista de concorrentes com análise disponível
+  const competitors = useMemo(
+    () => [...new Set((intel.data ?? []).map((c) => c.concorrente))].sort(),
+    [intel.data],
+  );
+
+  // Anúncios agrupados por concorrente (usa data mais recente de cada um)
+  const adsByComp = useMemo(() => {
+    const map = new Map<string, typeof ads.data>([]);
+    if (!ads.data) return map;
+
+    // Para cada concorrente, pega somente os anúncios da data mais recente dele
+    const compMaxDate = new Map<string, string>();
+    for (const a of ads.data) {
+      const cur = compMaxDate.get(a.concorrente);
+      if (!cur || a.data > cur) compMaxDate.set(a.concorrente, a.data);
     }
-  }, [datas.data, selectedDate]);
+    for (const a of ads.data) {
+      const max = compMaxDate.get(a.concorrente);
+      if (a.data !== max) continue;
+      const arr = map.get(a.concorrente) ?? [];
+      arr.push(a);
+      map.set(a.concorrente, arr);
+    }
+    return map;
+  }, [ads.data]);
 
-  const intel = useIntelByDate(selectedDate);
-  const ads = useConcorrentesAds(selectedDate);
-
-  const isLoading = datas.isLoading || intel.isLoading || ads.isLoading;
-  const error = datas.error || intel.error || ads.error;
-
-  // Derivar dinamicamente a lista de concorrentes a partir dos dados
-  const competitors = useMemo(() => {
-    const set = new Set<string>();
-    intel.data?.forEach((c) => c.concorrente && set.add(c.concorrente.trim()));
-    ads.data?.forEach((a) => a.concorrente && set.add(a.concorrente.trim()));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [intel.data, ads.data]);
-
-  // agrupar por concorrente
+  // Agrupa análises por concorrente
   const byCompetitor = useMemo(() => {
     const map = new Map<string, { campaigns: typeof intel.data; ads: typeof ads.data }>();
     for (const name of competitors) {
-      map.set(name, { campaigns: [], ads: [] });
+      map.set(name, { campaigns: [], ads: adsByComp.get(name) ?? [] });
     }
-    intel.data?.forEach((c) => {
+    (intel.data ?? []).forEach((c) => {
       const entry = map.get(c.concorrente.trim());
       if (entry) entry.campaigns!.push(c);
     });
-    ads.data?.forEach((a) => {
-      const entry = map.get(a.concorrente.trim());
-      if (entry) entry.ads!.push(a);
-    });
     return map;
-  }, [intel.data, ads.data, competitors]);
+  }, [intel.data, competitors, adsByComp]);
 
   const visibleCompetitors = useMemo(
     () => (selectedComp === "all" ? competitors : [selectedComp]),
@@ -69,92 +77,79 @@ export function IntelDashboard() {
 
   return (
     <section className="space-y-4">
-      {/* Filtros */}
+      {/* Filtro de concorrente */}
       <div className="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-neon-cyan" />
-          <Select
-            value={selectedDate}
-            onValueChange={setSelectedDate}
-            disabled={!datas.data || datas.data.length === 0}
-          >
-            <SelectTrigger className="w-[200px] border-primary/30 hover:border-neon-cyan">
-              <SelectValue placeholder="Selecione a data" />
-            </SelectTrigger>
-            <SelectContent className="glass-card border-primary/30">
-              {datas.data?.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {format(new Date(d), "dd MMM yyyy", { locale: ptBR })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground uppercase tracking-widest">
+          <Users className="h-4 w-4 text-neon-cyan" />
+          Concorrente
         </div>
 
-        <Select value={selectedComp} onValueChange={setSelectedComp}>
-          <SelectTrigger className="w-[220px] border-primary/30 hover:border-neon-cyan">
-            <SelectValue placeholder="Concorrente" />
-          </SelectTrigger>
-          <SelectContent className="glass-card border-primary/30">
-            <SelectItem value="all">Todos os concorrentes</SelectItem>
-            {competitors.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {selectedDate && (
-          <div className="ml-auto text-[10px] text-muted-foreground tracking-widest uppercase">
-            Data analisada:{" "}
-            {format(new Date(selectedDate), "dd MMM yyyy", { locale: ptBR })}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <FilterChip
+            label="Todos"
+            count={competitors.length}
+            active={selectedComp === "all"}
+            onClick={() => setSelectedComp("all")}
+          />
+          {competitors.map((c) => {
+            const nrAds = (intel.data ?? [])
+              .filter((i) => i.concorrente === c)
+              .reduce((s, i) => s + i.nr_anuncios, 0);
+            const dataAnuncio = (intel.data ?? []).find((i) => i.concorrente === c)?.data_anuncios;
+            return (
+              <FilterChip
+                key={c}
+                label={c}
+                count={nrAds || undefined}
+                date={dataAnuncio}
+                active={selectedComp === c}
+                onClick={() => setSelectedComp((cur) => (cur === c ? "all" : c))}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      {/* Resumo */}
+      {/* Conteúdo */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl h-24 skeleton-shimmer" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="glass-card rounded-xl h-28 skeleton-shimmer" />
           ))}
         </div>
       ) : error ? (
         <div className="glass-card rounded-xl p-6 text-center">
           <AlertCircle className="h-8 w-8 text-neon-orange mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            {(error as Error).message}
-          </p>
+          <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {competitors.map((name) => {
-              const entry = byCompetitor.get(name)!;
-              const totalAds = entry.ads?.length ?? 0;
-              const campanhas = entry.campaigns?.length ?? 0;
-              const isActive = selectedComp === name;
-              return (
-                <SummaryCard
-                  key={name}
-                  name={name}
-                  totalAds={totalAds}
-                  campanhas={campanhas}
-                  active={isActive}
-                  onClick={() =>
-                    setSelectedComp((curr) => (curr === name ? "all" : name))
-                  }
-                />
-              );
-            })}
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <SummaryCard
+              label="Concorrentes analisados"
+              value={competitors.length}
+              icon={Users}
+              color="cyan"
+            />
+            <SummaryCard
+              label="Campanhas identificadas"
+              value={(intel.data ?? []).length}
+              icon={Megaphone}
+              color="purple"
+            />
+            <SummaryCard
+              label="Anúncios analisados"
+              value={(intel.data ?? []).reduce((s, i) => s + i.nr_anuncios, 0)}
+              icon={Eye}
+              color="cyan"
+            />
           </div>
 
           {/* Blocos por concorrente */}
-          {isLoading ? (
-            <div className="space-y-3">
-              <div className="glass-card rounded-xl h-48 skeleton-shimmer" />
-              <div className="glass-card rounded-xl h-48 skeleton-shimmer" />
+          {visibleCompetitors.length === 0 ? (
+            <div className="glass-card rounded-xl p-8 text-center text-muted-foreground text-sm">
+              Nenhuma análise disponível.
             </div>
           ) : (
             <div className="space-y-6">
@@ -178,63 +173,60 @@ export function IntelDashboard() {
   );
 }
 
-function SummaryCard({
-  name,
-  totalAds,
-  campanhas,
-  active = false,
-  onClick,
+// ─── Sub-componentes ─────────────────────────────────────────────
+
+function FilterChip({
+  label, count, date, active, onClick,
 }: {
-  name: string;
-  totalAds: number;
-  campanhas: number;
-  active?: boolean;
-  onClick?: () => void;
+  label: string;
+  count?: number;
+  date?: string;
+  active: boolean;
+  onClick: () => void;
 }) {
   return (
     <button
-      type="button"
       onClick={onClick}
-      aria-pressed={active}
-      className={`glass-card rounded-xl p-4 flex items-center gap-3 border text-left w-full transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-cyan/50 ${
+      className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-all ${
         active
-          ? "border-neon-cyan/70 shadow-[0_0_24px_-6px_hsl(var(--neon-cyan)/0.55)] -translate-y-0.5"
-          : "border-primary/15 hover:border-primary/40 hover:-translate-y-0.5"
+          ? "border-neon-cyan/70 bg-neon-cyan/10 text-neon-cyan"
+          : "border-primary/20 text-muted-foreground hover:border-primary/50 hover:text-foreground"
       }`}
     >
-      <div
-        className={`p-2 rounded-lg bg-background/40 transition-colors ${
-          active ? "text-neon-cyan" : "text-neon-purple"
-        }`}
-      >
-        <Users className="h-5 w-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
-          {name}
-        </div>
-        <div className="flex items-baseline gap-3 mt-1">
-          <div className="flex items-center gap-1">
-            <Eye className="h-3.5 w-3.5 text-neon-cyan" />
-            <span className="text-xl font-light tabular-nums text-neon-cyan">
-              {formatNumber(totalAds)}
-            </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest ml-1">
-              anúncios
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Megaphone className="h-3.5 w-3.5 text-neon-purple" />
-            <span className="text-base font-light tabular-nums text-neon-purple">
-              {formatNumber(campanhas)}
-            </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest ml-1">
-              campanhas
-            </span>
-          </div>
-        </div>
-      </div>
+      {label}
+      {count !== undefined && (
+        <span className={`text-[10px] ${active ? "text-neon-cyan/70" : "text-muted-foreground/60"}`}>
+          ({count})
+        </span>
+      )}
+      {date && (
+        <span className={`flex items-center gap-0.5 text-[10px] ${active ? "text-neon-cyan/60" : "text-muted-foreground/50"}`}>
+          <CalendarIcon className="h-2.5 w-2.5" />
+          {format(new Date(date), "dd/MM", { locale: ptBR })}
+        </span>
+      )}
     </button>
   );
 }
 
+function SummaryCard({
+  label, value, icon: Icon, color,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  color: "cyan" | "purple";
+}) {
+  const c = color === "cyan" ? "text-neon-cyan" : "text-neon-purple";
+  return (
+    <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+      <div className={`p-2 rounded-lg bg-background/40 ${c}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+        <div className={`text-xl font-light tabular-nums ${c}`}>{formatNumber(value)}</div>
+      </div>
+    </div>
+  );
+}

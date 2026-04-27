@@ -70,7 +70,7 @@ export function useDatasDisponiveis() {
   });
 }
 
-// ─── Análise IA por data — lida da aba Inteligencia Concorrentes ─
+// ─── Análise IA por data — mantida para compatibilidade ─────────
 
 export function useIntelByDate(data: string | undefined) {
   return useQuery({
@@ -83,18 +83,7 @@ export function useIntelByDate(data: string | undefined) {
           const d = (r["Data Anuncios"] || r["Data Análise"] || "").slice(0, 10);
           return d === data;
         })
-        .map((r) => ({
-          concorrente:      (r["Concorrente"] || "").trim(),
-          tipo_campanha:    (r["Tipo de Campanha"] || "").trim(),
-          produto_oferta:   (r["Produto / Oferta"] || "").trim(),
-          cta:              (r["CTA Principal"] || "").trim(),
-          tom:              (r["Tom da Comunicacao"] || r["Tom da Comunicação"] || "").trim(),
-          nr_anuncios:      Number(r["Nr Anuncios Analisados"] || r["Nr Anúncios Analisados"] || 0),
-          resumo_executivo: (r["Resumo Executivo"] || r["Resumo Executivo"] || "").trim(),
-          data_analise:     (r["Data Analise"] || r["Data Análise"] || "").trim(),
-          data_anuncios:    (r["Data Anuncios"] || "").slice(0, 10),
-          detalhes:         (r["Detalhes por Campanha"] || "").trim(),
-        }));
+        .map(rowToIntelCampaign);
     },
     staleTime: 30 * 1000,
     refetchInterval: REFETCH_INTERVAL,
@@ -102,16 +91,70 @@ export function useIntelByDate(data: string | undefined) {
   });
 }
 
+// ─── Análise IA — última análise por concorrente (ignora data) ───
+// Retorna a análise mais recente de cada concorrente.
+// Exclui concorrentes cujo nome consta inteiramente na lista de desativados.
+
+export function useIntelAll(desativadosNomes?: Set<string>) {
+  return useQuery({
+    queryKey: ["intel", "all", SHEET_ID],
+    queryFn: async (): Promise<IntelCampaign[]> => {
+      const rows = await fetchSheetCSV("Inteligencia Concorrentes");
+
+      // Agrupa por concorrente, mantendo a linha mais recente
+      const latest = new Map<string, { row: Record<string, string>; date: string }>();
+      for (const r of rows) {
+        const nome = (r["Concorrente"] || "").trim();
+        if (!nome) continue;
+        const d = (r["Data Anuncios"] || "").slice(0, 10);
+        const cur = latest.get(nome);
+        if (!cur || d > cur.date) latest.set(nome, { row: r, date: d });
+      }
+
+      const result: IntelCampaign[] = [];
+      for (const [nome, { row }] of latest) {
+        // Remove da análise apenas se o concorrente estiver na lista de desativados
+        if (desativadosNomes?.has(nome)) continue;
+        result.push(rowToIntelCampaign(row));
+      }
+
+      // Ordena por data_anuncios desc, depois por concorrente
+      return result.sort((a, b) =>
+        b.data_anuncios.localeCompare(a.data_anuncios) ||
+        a.concorrente.localeCompare(b.concorrente),
+      );
+    },
+    staleTime: 30 * 1000,
+    refetchInterval: REFETCH_INTERVAL,
+    refetchOnWindowFocus: true,
+  });
+}
+
+function rowToIntelCampaign(r: Record<string, string>): IntelCampaign {
+  return {
+    concorrente:      (r["Concorrente"] || "").trim(),
+    tipo_campanha:    (r["Tipo de Campanha"] || "").trim(),
+    produto_oferta:   (r["Produto / Oferta"] || "").trim(),
+    cta:              (r["CTA Principal"] || "").trim(),
+    tom:              (r["Tom da Comunicacao"] || r["Tom da Comunicação"] || "").trim(),
+    nr_anuncios:      Number(r["Nr Anuncios Analisados"] || r["Nr Anúncios Analisados"] || 0),
+    resumo_executivo: (r["Resumo Executivo"] || "").trim(),
+    data_analise:     (r["Data Analise"] || r["Data Análise"] || "").trim(),
+    data_anuncios:    (r["Data Anuncios"] || "").slice(0, 10),
+    detalhes:         (r["Detalhes por Campanha"] || "").trim(),
+  };
+}
+
 // ─── Anúncios brutos por data — lidos da aba Concorrentes ────────
 
 export function useConcorrentesAds(data: string | undefined) {
   return useQuery({
-    queryKey: ["intel", "ads", data, SHEET_ID],
-    enabled: !!data,
+    queryKey: ["intel", "ads", data ?? "all", SHEET_ID],
     queryFn: async (): Promise<CompetitorAdRow[]> => {
       const rows = await fetchSheetCSV("Concorrentes");
       return rows
         .filter((r) => {
+          if (!data) return true;   // sem filtro de data → retorna tudo
           const d = (r["Data Extração"] || r["Data Extracao"] || r["Data"] || "").slice(0, 10);
           return d === data;
         })
