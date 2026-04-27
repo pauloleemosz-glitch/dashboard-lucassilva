@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import Papa from "papaparse";
 
-const API_BASE = "https://ethernet-qualified-nomination-remembered.trycloudflare.com";
+const SHEET_ID =
+  (import.meta.env.VITE_SHEET_ID as string) || "1my3EGzjPQgHKX_Q1WUr3PhWSDvODVUFKISIC2gDz5p8";
+
+const REFETCH_INTERVAL = 5 * 60 * 1000;
 
 export interface AnuncioDesativado {
   data_desativacao: string;
@@ -15,16 +19,31 @@ export interface AnuncioDesativado {
   link_drive: string;
 }
 
-const REFETCH_INTERVAL = 2 * 60 * 1000;
-
 export function useAnunciosDesativados() {
   return useQuery({
-    queryKey: ["anuncios-desativados"],
+    queryKey: ["anuncios-desativados", SHEET_ID],
     queryFn: async (): Promise<AnuncioDesativado[]> => {
-      const res = await fetch(`${API_BASE}/api/anuncios-desativados`);
-      if (!res.ok) throw new Error(`Erro anúncios desativados (${res.status})`);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      const encoded = encodeURIComponent("Anuncios Desativados");
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encoded}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Erro ao carregar desativados (${res.status})`);
+      const text = await res.text();
+      const parsed = Papa.parse<Record<string, string>>(text, {
+        header: true,
+        skipEmptyLines: true,
+      });
+      return parsed.data.map((r) => ({
+        data_desativacao: (r["Data Desativacao"] || r["Data Desativação"] || "").slice(0, 10),
+        concorrente:      (r["Concorrente"] || "").trim(),
+        pagina:           (r["Pagina"] || r["Página"] || "").trim(),
+        inicio:           (r["Inicio Anuncio"] || r["Início Anúncio"] || "").trim(),
+        ultima_vez_ativo: (r["Ultima Vez Ativo"] || r["Última Vez Ativo"] || "").trim(),
+        dias_ativo:       r["Dias Ativo"] || "",
+        titulo:           (r["Titulo"] || r["Título"] || "").trim(),
+        texto:            (r["Texto"] || "").trim(),
+        link_adlib:       (r["Link Ad Library"] || r["Link Prévia"] || "").trim(),
+        link_drive:       (r["Link Drive"] || "").trim(),
+      }));
     },
     staleTime: 60 * 1000,
     refetchInterval: REFETCH_INTERVAL,

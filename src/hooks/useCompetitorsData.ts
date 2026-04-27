@@ -51,11 +51,17 @@ async function fetchCompetitors(): Promise<{
   let maxExtraction: Date | null = null;
 
   for (const row of parsed.data) {
-    const link = row["Link Prévia"] || "";
-    const adId = extractAdId(link);
+    // Suporta coluna com e sem acento e nomes alternativos
+    const link =
+      row["Link Ad Library"] ||
+      row["Link Prévia"] ||
+      row["Link Previa"] ||
+      row["Link Preview"] ||
+      "";
+    const adId = extractAdId(link) || (link ? `manual_${link.slice(-12)}` : null);
     if (!adId) continue;
 
-    const ext = parseDate(row["Data Extração"]);
+    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
     if (ext && (!maxExtraction || ext > maxExtraction)) maxExtraction = ext;
 
     const entry = adMap.get(adId);
@@ -76,8 +82,8 @@ async function fetchCompetitors(): Promise<{
   for (const [adId, { rows, extractionDates }] of adMap) {
     // Use the most recent row as the canonical record
     const latest = rows.reduce((acc, r) => {
-      const a = parseDate(acc["Data Extração"]);
-      const b = parseDate(r["Data Extração"]);
+      const a = parseDate(acc["Data Extração"] || acc["Data Extracao"] || acc["Data"]);
+      const b = parseDate(r["Data Extração"] || r["Data Extracao"] || r["Data"]);
       if (!a) return r;
       if (!b) return acc;
       return b > a ? r : acc;
@@ -93,20 +99,20 @@ async function fetchCompetitors(): Promise<{
     const isActive =
       lastSeen && maxExtraction ? lastSeen.getTime() === maxExtraction.getTime() : false;
 
-    const inicio = parseDate(latest["Início Anúncio"]);
+    const inicio = parseDate(latest["Início Anúncio"] || latest["Inicio Anuncio"]);
     const referenceEnd = isActive ? today : lastSeen ?? today;
     const dias = inicio ? daysBetween(referenceEnd, inicio) : 0;
 
     ads.push({
       adId,
       concorrente: (latest["Concorrente"] || "Sem nome").trim(),
-      pagina: (latest["Página"] || "").trim(),
+      pagina: (latest["Página"] || latest["Pagina"] || "").trim(),
       inicioAnuncio: inicio,
-      titulo: (latest["Título"] || "").trim(),
+      titulo: (latest["Título"] || latest["Titulo"] || "").trim(),
       texto: cleanAdText(latest["Texto"] || ""),
-      descricao: (latest["Descrição"] || "").trim(),
+      descricao: (latest["Descrição"] || latest["Descricao"] || "").trim(),
       plataformas: parsePlatforms(latest["Plataformas"]),
-      link: latest["Link Prévia"] || latest["Link Ad Library"] || "",
+      link: latest["Link Ad Library"] || latest["Link Prévia"] || latest["Link Previa"] || "",
       driveLink: (latest["Link Drive"] || "").trim(),
       firstSeen,
       lastSeen,
