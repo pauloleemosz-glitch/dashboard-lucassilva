@@ -46,25 +46,34 @@ async function fetchCompetitors(): Promise<{
     skipEmptyLines: true,
   });
 
-  // Primeira passagem: encontrar a data de extração mais recente
+  // Primeira passagem: encontrar a data mais recente POR CONCORRENTE
+  // (cada concorrente pode ter sido capturado em datas diferentes)
   let maxExtraction: Date | null = null;
+  const compMaxDate = new Map<string, Date>();
 
   for (const row of parsed.data) {
-    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
-    if (ext && (!maxExtraction || ext > maxExtraction)) maxExtraction = ext;
+    const ext  = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
+    const nome = (row["Concorrente"] || "").trim();
+    if (!ext || !nome) continue;
+    if (!maxExtraction || ext > maxExtraction) maxExtraction = ext;
+    const cur = compMaxDate.get(nome);
+    if (!cur || ext > cur) compMaxDate.set(nome, ext);
   }
 
-  // Segunda passagem: carregar APENAS os anúncios da data mais recente
-  // (todos são ativos — capturamos com active_status=active no Apify)
-  // Anúncios de datas anteriores NÃO são considerados desativados aqui;
-  // desativados reais ficam na aba "Anuncios Desativados" via useAnunciosDesativados.
+  // Segunda passagem: para cada concorrente, carregar só os anúncios
+  // da SUA data mais recente (todos ativos — Apify usa active_status=active).
+  // Concorrentes sem captura hoje aparecem com os dados do último dia disponível.
+  // Desativados reais ficam na aba "Anuncios Desativados" via useAnunciosDesativados.
   const adMap = new Map<string, Record<string, string>>();
 
   for (const row of parsed.data) {
-    const ext = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
-    if (!ext || !maxExtraction) continue;
-    // Aceita qualquer linha do mesmo dia que maxExtraction
-    if (ext.getTime() !== maxExtraction.getTime()) continue;
+    const ext  = parseDate(row["Data Extração"] || row["Data Extracao"] || row["Data"]);
+    const nome = (row["Concorrente"] || "").trim();
+    if (!ext || !nome) continue;
+
+    // Só inclui se for a data mais recente deste concorrente
+    const compMax = compMaxDate.get(nome);
+    if (!compMax || ext.getTime() !== compMax.getTime()) continue;
 
     const link =
       row["Link Ad Library"] ||
@@ -75,7 +84,6 @@ async function fetchCompetitors(): Promise<{
     const adId = extractAdId(link) || (link ? `manual_${link.slice(-12)}` : null);
     if (!adId) continue;
 
-    // Se o mesmo ad_id aparece mais de uma vez no mesmo dia, mantém o primeiro
     if (!adMap.has(adId)) adMap.set(adId, row);
   }
 
