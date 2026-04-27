@@ -7,9 +7,10 @@ interface Props {
   concorrente: string;
   campaigns: IntelCampaign[];
   ads: CompetitorAdRow[];
+  isOwn?: boolean;
 }
 
-export function IntelCompetitorBlock({ concorrente, campaigns, ads }: Props) {
+export function IntelCompetitorBlock({ concorrente, campaigns, ads, isOwn }: Props) {
   const resumo =
     campaigns.find((c) => c.resumo_executivo)?.resumo_executivo ||
     "Sem análise disponível.";
@@ -19,19 +20,19 @@ export function IntelCompetitorBlock({ concorrente, campaigns, ads }: Props) {
   return (
     <section className="space-y-3">
       <header className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight neon-text-white-glow">
+        <div className={`h-px flex-1 bg-gradient-to-r ${isOwn ? "from-amber-400/50" : "from-primary/40"} to-transparent`} />
+        <h2 className={`text-xl md:text-2xl font-semibold tracking-tight ${isOwn ? "text-amber-300" : "neon-text-white-glow"}`}>
           {concorrente}
         </h2>
-        <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
+        <div className={`h-px flex-1 bg-gradient-to-l ${isOwn ? "from-amber-400/50" : "from-primary/40"} to-transparent`} />
       </header>
 
       {/* Análise IA */}
-      <div className="glass-card rounded-xl p-4 border border-primary/20">
+      <div className={`glass-card rounded-xl p-4 border ${isOwn ? "border-amber-400/25" : "border-primary/20"}`}>
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-4 w-4 text-neon-purple" />
+          <Sparkles className={`h-4 w-4 ${isOwn ? "text-amber-400" : "text-neon-purple"}`} />
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Análise da IA
+            {isOwn ? "Nossa análise de campanha" : "Análise da IA"}
           </span>
         </div>
         <p className="text-sm text-foreground/90 whitespace-pre-line leading-relaxed">

@@ -1,10 +1,11 @@
-import { Eye, Activity, XCircle, Users, AlertCircle } from "lucide-react";
+import { Eye, Activity, XCircle, Users, AlertCircle, Home } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCompetitorsData } from "@/hooks/useCompetitorsData";
 import { useAnunciosDesativados, AnuncioDesativado } from "@/hooks/useAnunciosDesativados";
 import { useMemo } from "react";
 import { CompetitorGroup } from "./CompetitorGroup";
+import { OwnBusinessGroup } from "./OwnBusinessGroup";
 import { formatNumber } from "@/utils/parsers";
 
 export function CompetitorsSection() {
@@ -75,7 +76,29 @@ export function CompetitorsSection() {
             <SummaryKpi label="Desativados" value={totalDesativadosReal} icon={XCircle} color="orange" />
           </div>
 
-          {/* Groups */}
+          {/* Nosso negócio — pinned at top */}
+          {data.ownGroup && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-400/80">
+                <Home className="h-3 w-3" />
+                Nosso negócio
+              </div>
+              <OwnBusinessGroup group={data.ownGroup} defaultOpen />
+            </div>
+          )}
+
+          {/* Divider */}
+          {data.ownGroup && data.groups.length > 0 && (
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-primary/20" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Concorrentes
+              </span>
+              <div className="h-px flex-1 bg-primary/20" />
+            </div>
+          )}
+
+          {/* Competitor groups */}
           {data.groups.length === 0 ? (
             <div className="glass-card rounded-xl p-8 text-center text-muted-foreground text-sm">
               Nenhum anúncio de concorrente encontrado.

@@ -19,6 +19,7 @@ export interface CompetitorAd {
   lastSeen: Date | null;
   status: CompetitorAdStatus;
   diasAtivo: number;
+  tipo: "proprio" | "concorrente";
 }
 
 export interface CompetitorGroup {
@@ -33,6 +34,7 @@ const SHEET_ID =
 
 async function fetchCompetitors(): Promise<{
   groups: CompetitorGroup[];
+  ownGroup: CompetitorGroup | null;
   totals: { total: number; ativos: number; desativados: number; concorrentes: number };
   latestExtraction: Date | null;
 }> {
@@ -81,10 +83,11 @@ async function fetchCompetitors(): Promise<{
       row["Link Previa"] ||
       row["Link Preview"] ||
       "";
-    const adId = extractAdId(link) || (link ? `manual_${link.slice(-12)}` : null);
+    const tipoRaw = (row["Tipo"] || "concorrente").trim().toLowerCase();
+    const adId = extractAdId(link) || (link ? `manual_${link.slice(-12)}` : `noid_${nome}_${ext.getTime()}_${Math.random().toString(36).slice(2,7)}`);
     if (!adId) continue;
 
-    if (!adMap.has(adId)) adMap.set(adId, row);
+    if (!adMap.has(adId)) adMap.set(adId, { ...row, _tipo: tipoRaw });
   }
 
   const today = new Date();
@@ -93,6 +96,7 @@ async function fetchCompetitors(): Promise<{
   for (const [adId, row] of adMap) {
     const inicio = parseDate(row["Início Anúncio"] || row["Inicio Anuncio"]);
     const dias = inicio ? daysBetween(today, inicio) : 0;
+    const tipoVal = ((row as Record<string, string>)["_tipo"] || "concorrente") as "proprio" | "concorrente";
 
     ads.push({
       adId,
@@ -109,17 +113,21 @@ async function fetchCompetitors(): Promise<{
       lastSeen:    maxExtraction,
       status:      "ativo",   // todos da última extração são ativos
       diasAtivo:   dias,
+      tipo:        tipoVal,
     });
   }
 
-  // Group by concorrente
+  // Group by concorrente — separate "proprio" from competitors
   const groupMap = new Map<string, CompetitorGroup>();
+  const ownMap   = new Map<string, CompetitorGroup>();
+
   for (const ad of ads) {
-    const g = groupMap.get(ad.concorrente);
+    const target = ad.tipo === "proprio" ? ownMap : groupMap;
+    const g = target.get(ad.concorrente);
     if (g) {
       (ad.status === "ativo" ? g.ativos : g.desativados).push(ad);
     } else {
-      groupMap.set(ad.concorrente, {
+      target.set(ad.concorrente, {
         concorrente: ad.concorrente,
         pagina: ad.pagina,
         ativos: ad.status === "ativo" ? [ad] : [],
@@ -128,31 +136,35 @@ async function fetchCompetitors(): Promise<{
     }
   }
 
-  // Sort: ativos by start date desc, desativados by lastSeen desc
-  const groups = Array.from(groupMap.values()).map((g) => ({
+  const sortGroup = (g: CompetitorGroup): CompetitorGroup => ({
     ...g,
-    ativos: g.ativos.sort(
+    ativos: [...g.ativos].sort(
       (a, b) => (b.inicioAnuncio?.getTime() ?? 0) - (a.inicioAnuncio?.getTime() ?? 0),
     ),
-    desativados: g.desativados.sort(
+    desativados: [...g.desativados].sort(
       (a, b) => (b.lastSeen?.getTime() ?? 0) - (a.lastSeen?.getTime() ?? 0),
     ),
-  }));
+  });
 
-  // Order groups: more ativos first, then alphabetical
+  // Sort: more ativos first, then alphabetical
+  const groups = Array.from(groupMap.values()).map(sortGroup);
   groups.sort((a, b) => {
     if (b.ativos.length !== a.ativos.length) return b.ativos.length - a.ativos.length;
     return a.concorrente.localeCompare(b.concorrente);
   });
 
+  const ownGroups = Array.from(ownMap.values()).map(sortGroup);
+  const ownGroup = ownGroups[0] ?? null;
+
   // Todos os anúncios da última extração são ativos
-  const totalAds = ads.length;
+  const competitorAds = ads.filter((a) => a.tipo !== "proprio");
 
   return {
     groups,
+    ownGroup,
     totals: {
-      total:        totalAds,
-      ativos:       totalAds,
+      total:        competitorAds.length,
+      ativos:       competitorAds.length,
       desativados:  0,   // desativados reais vêm de useAnunciosDesativados
       concorrentes: groups.length,
     },

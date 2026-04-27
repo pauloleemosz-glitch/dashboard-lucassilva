@@ -18,9 +18,11 @@ const PLATFORM_LABELS: Record<string, string> = {
 
 interface Props {
   ad: CompetitorAd;
+  highlight?: "own";
 }
 
-export function CompetitorAdCard({ ad }: Props) {
+export function CompetitorAdCard({ ad, highlight }: Props) {
+  const isOwn = highlight === "own";
   const isActive = ad.status === "ativo";
   const titulo = ad.titulo && !ad.titulo.startsWith("{{") ? ad.titulo : "(sem título)";
   const texto = ad.texto && !ad.texto.startsWith("{{") ? ad.texto : "";
@@ -41,7 +43,9 @@ export function CompetitorAdCard({ ad }: Props) {
     <div
       className={cn(
         "glass-card rounded-xl p-4 flex flex-col gap-3 transition-all group",
-        isActive
+        isOwn
+          ? "border-amber-400/40 hover:border-amber-400/70 hover:shadow-[0_0_24px_rgba(251,191,36,0.2)]"
+          : isActive
           ? "border-neon-cyan/40 hover:border-neon-cyan/80 hover:shadow-[0_0_24px_hsl(var(--neon-cyan)/0.25)]"
           : "border-neon-orange/30 hover:border-neon-orange/60 opacity-90",
       )}

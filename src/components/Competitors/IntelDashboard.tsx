@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, Eye, Megaphone, Users, CalendarIcon } from "lucide-react";
+import {
+  AlertCircle, Eye, Megaphone, Users, CalendarIcon,
+  Home, Zap, ChevronDown, ChevronUp,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIntelAll, useConcorrentesAds } from "@/hooks/useIntelData";
 import { useAnunciosDesativados } from "@/hooks/useAnunciosDesativados";
+import { useComparacoes } from "@/hooks/useComparacoes";
 import { IntelCompetitorBlock } from "./IntelCompetitorBlock";
 import { formatNumber } from "@/utils/parsers";
 
@@ -21,19 +25,34 @@ export function IntelDashboard() {
   }, [desativados.data]);
 
   // Análise mais recente por concorrente (independente de data)
-  // Some apenas se todos os anúncios do concorrente estiverem desativados
   const intel = useIntelAll(desativadosNomes);
 
-  // Anúncios da data mais recente de cada concorrente (para exibir no bloco)
-  const ads = useConcorrentesAds(undefined);   // carrega todos, sem filtro de data
+  // Anúncios da data mais recente de cada concorrente
+  const ads = useConcorrentesAds(undefined);
+
+  // Comparações LS Certificacoes vs concorrentes
+  const comparacoes = useComparacoes();
 
   const isLoading = intel.isLoading || ads.isLoading;
   const error     = intel.error || ads.error;
 
+  // Separar análise de LS Certificacoes (próprio) da de concorrentes
+  const PROPRIO_NOME = "LS Certificacoes";
+
+  const ownCampaigns = useMemo(
+    () => (intel.data ?? []).filter((c) => c.concorrente === PROPRIO_NOME),
+    [intel.data],
+  );
+
+  const competitorCampaigns = useMemo(
+    () => (intel.data ?? []).filter((c) => c.concorrente !== PROPRIO_NOME),
+    [intel.data],
+  );
+
   // Lista de concorrentes com análise disponível
   const competitors = useMemo(
-    () => [...new Set((intel.data ?? []).map((c) => c.concorrente))].sort(),
-    [intel.data],
+    () => [...new Set(competitorCampaigns.map((c) => c.concorrente))].sort(),
+    [competitorCampaigns],
   );
 
   // Anúncios agrupados por concorrente (usa data mais recente de cada um)
@@ -41,7 +60,6 @@ export function IntelDashboard() {
     const map = new Map<string, typeof ads.data>([]);
     if (!ads.data) return map;
 
-    // Para cada concorrente, pega somente os anúncios da data mais recente dele
     const compMaxDate = new Map<string, string>();
     for (const a of ads.data) {
       const cur = compMaxDate.get(a.concorrente);
@@ -63,12 +81,14 @@ export function IntelDashboard() {
     for (const name of competitors) {
       map.set(name, { campaigns: [], ads: adsByComp.get(name) ?? [] });
     }
-    (intel.data ?? []).forEach((c) => {
+    competitorCampaigns.forEach((c) => {
       const entry = map.get(c.concorrente.trim());
       if (entry) entry.campaigns!.push(c);
     });
     return map;
-  }, [intel.data, competitors, adsByComp]);
+  }, [competitorCampaigns, competitors, adsByComp]);
+
+  const ownAds = adsByComp.get(PROPRIO_NOME) ?? [];
 
   const visibleCompetitors = useMemo(
     () => (selectedComp === "all" ? competitors : [selectedComp]),
@@ -92,10 +112,10 @@ export function IntelDashboard() {
             onClick={() => setSelectedComp("all")}
           />
           {competitors.map((c) => {
-            const nrAds = (intel.data ?? [])
+            const nrAds = competitorCampaigns
               .filter((i) => i.concorrente === c)
               .reduce((s, i) => s + i.nr_anuncios, 0);
-            const dataAnuncio = (intel.data ?? []).find((i) => i.concorrente === c)?.data_anuncios;
+            const dataAnuncio = competitorCampaigns.find((i) => i.concorrente === c)?.data_anuncios;
             return (
               <FilterChip
                 key={c}
@@ -124,7 +144,7 @@ export function IntelDashboard() {
         </div>
       ) : (
         <>
-          {/* KPI cards */}
+          {/* KPI cards — apenas concorrentes */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <SummaryCard
               label="Concorrentes analisados"
@@ -134,17 +154,46 @@ export function IntelDashboard() {
             />
             <SummaryCard
               label="Campanhas identificadas"
-              value={(intel.data ?? []).length}
+              value={competitorCampaigns.length}
               icon={Megaphone}
               color="purple"
             />
             <SummaryCard
               label="Anúncios analisados"
-              value={(intel.data ?? []).reduce((s, i) => s + i.nr_anuncios, 0)}
+              value={competitorCampaigns.reduce((s, i) => s + i.nr_anuncios, 0)}
               icon={Eye}
               color="cyan"
             />
           </div>
+
+          {/* Nossa Estratégia — sempre pinned at top */}
+          {selectedComp === "all" && ownCampaigns.length > 0 && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-amber-400/80">
+                <Home className="h-3 w-3" />
+                Nossa estratégia
+              </div>
+              <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4 space-y-3">
+                <IntelCompetitorBlock
+                  concorrente={PROPRIO_NOME}
+                  campaigns={ownCampaigns}
+                  ads={ownAds}
+                  isOwn
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          {selectedComp === "all" && ownCampaigns.length > 0 && competitors.length > 0 && (
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-primary/20" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Análise de concorrentes
+              </span>
+              <div className="h-px flex-1 bg-primary/20" />
+            </div>
+          )}
 
           {/* Blocos por concorrente */}
           {visibleCompetitors.length === 0 ? (
@@ -156,13 +205,18 @@ export function IntelDashboard() {
               {visibleCompetitors.map((name) => {
                 const entry = byCompetitor.get(name);
                 if (!entry) return null;
+                const comp = comparacoes.data?.get(name);
                 return (
-                  <IntelCompetitorBlock
-                    key={name}
-                    concorrente={name}
-                    campaigns={entry.campaigns ?? []}
-                    ads={entry.ads ?? []}
-                  />
+                  <div key={name} className="space-y-3">
+                    <IntelCompetitorBlock
+                      concorrente={name}
+                      campaigns={entry.campaigns ?? []}
+                      ads={entry.ads ?? []}
+                    />
+                    {comp && (
+                      <ComparisonBlock comparacao={comp} />
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -170,6 +224,106 @@ export function IntelDashboard() {
         </>
       )}
     </section>
+  );
+}
+
+// ─── Bloco de comparação IA ──────────────────────────────────────
+
+function ComparisonBlock({ comparacao }: { comparacao: import("@/hooks/useComparacoes").Comparacao }) {
+  const [open, setOpen] = useState(false);
+  const hasDiff = comparacao.diferenciais_nossos.length > 0
+    || comparacao.diferenciais_concorrente.length > 0
+    || comparacao.oportunidades.length > 0;
+
+  if (!comparacao.resumo_comparativo && !hasDiff) return null;
+
+  return (
+    <div className="rounded-xl border border-neon-purple/25 bg-neon-purple/5">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full px-4 py-3 flex items-center gap-2 text-left hover:bg-neon-purple/10 transition-colors rounded-xl"
+      >
+        <Zap className="h-4 w-4 text-neon-purple shrink-0" />
+        <span className="text-[11px] uppercase tracking-widest text-neon-purple font-medium flex-1">
+          O que fazemos diferente
+        </span>
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-neon-purple/60" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-neon-purple/60" />
+        )}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-4">
+          {/* Resumo */}
+          {comparacao.resumo_comparativo && (
+            <p className="text-sm text-foreground/85 leading-relaxed">
+              {comparacao.resumo_comparativo}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Nossos diferenciais */}
+            {comparacao.diferenciais_nossos.length > 0 && (
+              <DiffList
+                title="Nossos diferenciais"
+                items={comparacao.diferenciais_nossos}
+                color="amber"
+              />
+            )}
+            {/* Diferenciais do concorrente */}
+            {comparacao.diferenciais_concorrente.length > 0 && (
+              <DiffList
+                title="Diferenciais do concorrente"
+                items={comparacao.diferenciais_concorrente}
+                color="cyan"
+              />
+            )}
+            {/* Oportunidades */}
+            {comparacao.oportunidades.length > 0 && (
+              <DiffList
+                title="Oportunidades"
+                items={comparacao.oportunidades}
+                color="purple"
+              />
+            )}
+          </div>
+
+          {comparacao.data && (
+            <div className="text-[10px] text-muted-foreground/60 text-right">
+              Análise de {format(new Date(comparacao.data), "dd/MM/yyyy", { locale: ptBR })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DiffList({ title, items, color }: {
+  title: string;
+  items: string[];
+  color: "amber" | "cyan" | "purple";
+}) {
+  const colorMap = {
+    amber:  { dot: "bg-amber-400", label: "text-amber-300", border: "border-amber-400/20 bg-amber-400/5" },
+    cyan:   { dot: "bg-neon-cyan",  label: "text-neon-cyan",  border: "border-neon-cyan/20 bg-neon-cyan/5" },
+    purple: { dot: "bg-neon-purple",label: "text-neon-purple",border: "border-neon-purple/20 bg-neon-purple/5" },
+  };
+  const c = colorMap[color];
+  return (
+    <div className={`rounded-lg border p-3 space-y-2 ${c.border}`}>
+      <div className={`text-[10px] uppercase tracking-widest font-medium ${c.label}`}>{title}</div>
+      <ul className="space-y-1.5">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2 text-xs text-foreground/80 leading-relaxed">
+            <span className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${c.dot}`} />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
