@@ -16,8 +16,22 @@ interface Props {
   maxDate?: Date | null;
 }
 
-export function GlobalFilters({ cursos, lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
-  const { dateRange, setDateRange, curso, setCurso, modo, setModo } = useFilters();
+export function GlobalFilters({ cursos: cursosDisponiveis, lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo } = useFilters();
+
+  const allSelected = cursosSelecionados.length === 0;
+  const toggleCurso = (c: string) => {
+    if (cursosSelecionados.includes(c)) {
+      setCursos(cursosSelecionados.filter((x) => x !== c));
+    } else {
+      setCursos([...cursosSelecionados, c]);
+    }
+  };
+  const cursoLabel = allSelected
+    ? "Todos os cursos"
+    : cursosSelecionados.length === 1
+      ? cursosSelecionados[0]
+      : `${cursosSelecionados.length} cursos selecionados`;
 
   const today = maxDate ? endOfDay(maxDate) : endOfDay(new Date());
   const todayStart = maxDate ? startOfDay(maxDate) : startOfDay(new Date());
