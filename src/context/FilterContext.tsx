@@ -6,6 +6,9 @@ export type Modo = "perpetuo" | "lead" | "geral";
 interface FilterCtx {
   dateRange: DateRange | undefined;
   setDateRange: (r: DateRange | undefined) => void;
+  cursos: string[];
+  setCursos: (c: string[]) => void;
+  /** @deprecated compat: retorna primeiro curso ou "all" */
   curso: string;
   setCurso: (c: string) => void;
   modo: Modo;
@@ -16,12 +19,21 @@ const FilterContext = createContext<FilterCtx | null>(null);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [curso, setCurso] = useState<string>("all");
+  const [cursos, setCursos] = useState<string[]>([]);
   const [modo, setModo] = useState<Modo>("perpetuo");
 
   const value = useMemo(
-    () => ({ dateRange, setDateRange, curso, setCurso, modo, setModo }),
-    [dateRange, curso, modo],
+    () => ({
+      dateRange,
+      setDateRange,
+      cursos,
+      setCursos,
+      curso: cursos.length === 1 ? cursos[0] : "all",
+      setCurso: (c: string) => setCursos(c === "all" ? [] : [c]),
+      modo,
+      setModo,
+    }),
+    [dateRange, cursos, modo],
   );
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }
