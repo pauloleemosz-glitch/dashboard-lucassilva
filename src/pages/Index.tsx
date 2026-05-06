@@ -79,22 +79,27 @@ function Dashboard() {
     return Array.from(set).sort();
   }, [allRows, dateRange]);
 
-  // Se o curso atualmente selecionado sumir do período, volta para "all"
+  // Remove cursos selecionados que sumiram do período
   useEffect(() => {
-    if (curso !== "all" && cursos.length > 0 && !cursos.includes(curso)) {
-      setCurso("all");
+    if (cursosSelecionados.length === 0 || cursos.length === 0) return;
+    const filtrados = cursosSelecionados.filter((c) => cursos.includes(c));
+    if (filtrados.length !== cursosSelecionados.length) {
+      setCursos(filtrados);
     }
-  }, [cursos, curso, setCurso]);
+  }, [cursos, cursosSelecionados, setCursos]);
+
+  const cursoMatch = (c?: string) =>
+    cursosSelecionados.length === 0 || (c ? cursosSelecionados.includes(c) : false);
 
   // Filtering
   const filtered = useMemo(() => {
     return allRows.filter((r) => {
-      if (curso !== "all" && r.curso !== curso) return false;
+      if (!cursoMatch(r.curso)) return false;
       if (dateRange?.from && r.date && r.date < dateRange.from) return false;
       if (dateRange?.to && r.date && r.date > dateRange.to) return false;
       return true;
     });
-  }, [allRows, curso, dateRange]);
+  }, [allRows, cursosSelecionados, dateRange]);
 
   // Previous period for variation
   const previousFiltered = useMemo(() => {
@@ -103,11 +108,11 @@ function Dashboard() {
     const prevTo = new Date(dateRange.from.getTime() - 1);
     const prevFrom = new Date(prevTo.getTime() - span);
     return allRows.filter((r) => {
-      if (curso !== "all" && r.curso !== curso) return false;
+      if (!cursoMatch(r.curso)) return false;
       if (!r.date) return false;
       return r.date >= prevFrom && r.date <= prevTo;
     });
-  }, [allRows, curso, dateRange]);
+  }, [allRows, cursosSelecionados, dateRange]);
 
   const agg = aggregate(filtered);
   const prevAgg = aggregate(previousFiltered);
