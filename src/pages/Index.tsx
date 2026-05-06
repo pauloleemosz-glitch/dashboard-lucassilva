@@ -42,7 +42,7 @@ function aggregate(rows: AdRow[]) {
 
 function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
-  const { dateRange, setDateRange, curso, setCurso, modo } = useFilters();
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo } = useFilters();
 
   const allRows = data ?? [];
 
