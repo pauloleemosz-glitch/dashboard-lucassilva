@@ -104,20 +104,51 @@ export function GlobalFilters({ cursos: cursosDisponiveis, lastUpdated, onRefres
         </PopoverContent>
       </Popover>
 
-      {/* Curso */}
-      <Select value={curso} onValueChange={setCurso}>
-        <SelectTrigger className="w-[240px] border-primary/30 hover:border-neon-cyan">
-          <SelectValue placeholder="Curso / Produto" />
-        </SelectTrigger>
-        <SelectContent className="glass-card border-primary/30">
-          <SelectItem value="all">Todos os cursos</SelectItem>
-          {cursos.map((c) => (
-            <SelectItem key={c} value={c}>
-              {c}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Curso (multi-seleção) */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            className={cn(
+              "inline-flex items-center justify-between gap-2 w-[240px] px-3 py-2 rounded-md border border-primary/30 text-sm",
+              "hover:border-neon-cyan hover:bg-primary/5 transition-colors",
+            )}
+          >
+            <span className={cn("truncate", allSelected && "text-muted-foreground")}>{cursoLabel}</span>
+            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[260px] p-1 glass-card border-primary/30" align="start">
+          <button
+            onClick={() => setCursos([])}
+            className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
+          >
+            <span className="w-4 h-4 inline-flex items-center justify-center">
+              {allSelected && <Check className="h-3.5 w-3.5 text-neon-cyan" />}
+            </span>
+            Todos os cursos
+          </button>
+          <div className="max-h-[280px] overflow-y-auto">
+            {cursosDisponiveis.map((c) => {
+              const checked = cursosSelecionados.includes(c);
+              return (
+                <button
+                  key={c}
+                  onClick={() => toggleCurso(c)}
+                  className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
+                >
+                  <span className={cn(
+                    "w-4 h-4 inline-flex items-center justify-center rounded border",
+                    checked ? "border-neon-cyan bg-primary/20" : "border-primary/30",
+                  )}>
+                    {checked && <Check className="h-3 w-3 text-neon-cyan" />}
+                  </span>
+                  <span className="truncate">{c}</span>
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
 
       {/* Toggle Perpétuo / Lead / Geral */}
       <div className="inline-flex items-center rounded-md border border-primary/30 p-0.5">
