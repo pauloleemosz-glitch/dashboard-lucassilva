@@ -342,6 +342,55 @@ function Dashboard() {
             </div>
           )}
 
+          {modo === "perpetuo" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <KPICard
+                label="Visualizações da Página"
+                value={agg.landingPageViews}
+                variation={variacaoPct(agg.landingPageViews, prevAgg.landingPageViews)}
+                icon={FileText}
+                color="cyan"
+                delay={0}
+              />
+              <KPICard
+                label="Clique → Página"
+                value={agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null}
+                variation={variacaoPct(
+                  agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null,
+                  prevAgg.clicks > 0 ? (prevAgg.landingPageViews / prevAgg.clicks) * 100 : null,
+                )}
+                icon={MousePointerClick}
+                color="cyan"
+                format={(v) => formatPct(v)}
+                delay={0.05}
+              />
+              <KPICard
+                label="Página → Compra"
+                value={agg.landingPageViews > 0 ? (agg.compras / agg.landingPageViews) * 100 : null}
+                variation={variacaoPct(
+                  agg.landingPageViews > 0 ? (agg.compras / agg.landingPageViews) * 100 : null,
+                  prevAgg.landingPageViews > 0 ? (prevAgg.compras / prevAgg.landingPageViews) * 100 : null,
+                )}
+                icon={Target}
+                color="gold"
+                format={(v) => formatPct(v)}
+                delay={0.1}
+              />
+              <KPICard
+                label="Clique → Compra"
+                value={agg.clicks > 0 ? (agg.compras / agg.clicks) * 100 : null}
+                variation={variacaoPct(
+                  agg.clicks > 0 ? (agg.compras / agg.clicks) * 100 : null,
+                  prevAgg.clicks > 0 ? (prevAgg.compras / prevAgg.clicks) * 100 : null,
+                )}
+                icon={Zap}
+                color="purple"
+                format={(v) => formatPct(v)}
+                delay={0.15}
+              />
+            </div>
+          )}
+
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
