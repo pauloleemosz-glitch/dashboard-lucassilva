@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap } from "lucide-react";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
@@ -292,6 +292,55 @@ function Dashboard() {
               delay={0.35}
             />
           </div>
+
+          {modo === "lead" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <KPICard
+                label="Visualizações da Página"
+                value={agg.landingPageViews}
+                variation={variacaoPct(agg.landingPageViews, prevAgg.landingPageViews)}
+                icon={FileText}
+                color="cyan"
+                delay={0}
+              />
+              <KPICard
+                label="Clique → Página"
+                value={agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null}
+                variation={variacaoPct(
+                  agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null,
+                  prevAgg.clicks > 0 ? (prevAgg.landingPageViews / prevAgg.clicks) * 100 : null,
+                )}
+                icon={MousePointerClick}
+                color="cyan"
+                format={(v) => formatPct(v)}
+                delay={0.05}
+              />
+              <KPICard
+                label="Página → Lead"
+                value={agg.landingPageViews > 0 ? (agg.leads / agg.landingPageViews) * 100 : null}
+                variation={variacaoPct(
+                  agg.landingPageViews > 0 ? (agg.leads / agg.landingPageViews) * 100 : null,
+                  prevAgg.landingPageViews > 0 ? (prevAgg.leads / prevAgg.landingPageViews) * 100 : null,
+                )}
+                icon={Target}
+                color="gold"
+                format={(v) => formatPct(v)}
+                delay={0.1}
+              />
+              <KPICard
+                label="Clique → Lead"
+                value={agg.clicks > 0 ? (agg.leads / agg.clicks) * 100 : null}
+                variation={variacaoPct(
+                  agg.clicks > 0 ? (agg.leads / agg.clicks) * 100 : null,
+                  prevAgg.clicks > 0 ? (prevAgg.leads / prevAgg.clicks) * 100 : null,
+                )}
+                icon={Zap}
+                color="purple"
+                format={(v) => formatPct(v)}
+                delay={0.15}
+              />
+            </div>
+          )}
 
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
