@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap } from "lucide-react";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
