@@ -304,7 +304,7 @@ function Dashboard() {
                 delay={0}
               />
               <KPICard
-                label="Clique → Página"
+                label="Connect Rate"
                 value={agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null}
                 variation={variacaoPct(
                   agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null,
@@ -316,7 +316,7 @@ function Dashboard() {
                 delay={0.05}
               />
               <KPICard
-                label="Página → Lead"
+                label="Conversão Página"
                 value={agg.landingPageViews > 0 ? (agg.leads / agg.landingPageViews) * 100 : null}
                 variation={variacaoPct(
                   agg.landingPageViews > 0 ? (agg.leads / agg.landingPageViews) * 100 : null,
@@ -328,7 +328,7 @@ function Dashboard() {
                 delay={0.1}
               />
               <KPICard
-                label="Clique → Lead"
+                label="Conversão do Clique"
                 value={agg.clicks > 0 ? (agg.leads / agg.clicks) * 100 : null}
                 variation={variacaoPct(
                   agg.clicks > 0 ? (agg.leads / agg.clicks) * 100 : null,
@@ -353,7 +353,7 @@ function Dashboard() {
                 delay={0}
               />
               <KPICard
-                label="Clique → Página"
+                label="Connect Rate"
                 value={agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null}
                 variation={variacaoPct(
                   agg.clicks > 0 ? (agg.landingPageViews / agg.clicks) * 100 : null,
@@ -365,7 +365,7 @@ function Dashboard() {
                 delay={0.05}
               />
               <KPICard
-                label="Página → Compra"
+                label="Conversão Página"
                 value={agg.landingPageViews > 0 ? (agg.compras / agg.landingPageViews) * 100 : null}
                 variation={variacaoPct(
                   agg.landingPageViews > 0 ? (agg.compras / agg.landingPageViews) * 100 : null,
@@ -377,7 +377,7 @@ function Dashboard() {
                 delay={0.1}
               />
               <KPICard
-                label="Clique → Compra"
+                label="Conversão do Clique"
                 value={agg.clicks > 0 ? (agg.compras / agg.clicks) * 100 : null}
                 variation={variacaoPct(
                   agg.clicks > 0 ? (agg.compras / agg.clicks) * 100 : null,
