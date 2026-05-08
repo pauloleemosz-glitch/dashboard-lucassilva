@@ -171,17 +171,19 @@ function Dashboard() {
     leads: d.leads,
   }));
 
-  // Product share (sales count + leads count) by curso
+  // Product share (sales count + revenue + leads count) by curso
   const { salesShare, leadsShare } = useMemo(() => {
     const sMap = new Map<string, number>();
+    const revMap = new Map<string, number>();
     const lMap = new Map<string, number>();
     for (const r of filtered) {
       const k = r.curso || "Sem categoria";
       sMap.set(k, (sMap.get(k) || 0) + r.compras);
+      revMap.set(k, (revMap.get(k) || 0) + r.valorCompra);
       lMap.set(k, (lMap.get(k) || 0) + r.leads);
     }
     return {
-      salesShare: Array.from(sMap, ([name, value]) => ({ name, value })),
+      salesShare: Array.from(sMap, ([name, value]) => ({ name, value, revenue: revMap.get(name) || 0 })),
       leadsShare: Array.from(lMap, ([name, value]) => ({ name, value })),
     };
   }, [filtered]);

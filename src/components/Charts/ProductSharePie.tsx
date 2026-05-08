@@ -1,10 +1,11 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChartCard } from "./ChartCard";
-import { formatNumber, formatPct } from "@/utils/parsers";
+import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 
 interface Slice {
   name: string;
   value: number;
+  revenue?: number;
 }
 
 const COLORS = [
@@ -34,7 +35,10 @@ function PieTooltip({ active, payload, total }: any) {
         <span className="w-2 h-2 rounded-full" style={{ background: p.payload.fill }} />
         <span style={{ color: p.payload.fill }}>{p.name}</span>
       </div>
-      <div className="text-foreground tabular-nums">{formatNumber(p.value)}</div>
+      <div className="text-foreground tabular-nums">{formatNumber(p.value)} vendas</div>
+      {typeof p.payload.revenue === "number" && p.payload.revenue > 0 && (
+        <div className="text-foreground tabular-nums">{formatBRL(p.payload.revenue)}</div>
+      )}
       <div className="text-muted-foreground">{formatPct(pct)} do total</div>
     </div>
   );
@@ -81,7 +85,17 @@ export function ProductSharePie({
             <Legend
               wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
               iconType="circle"
-              formatter={(v: string) => <span style={{ color: "hsl(var(--muted-foreground))" }}>{v}</span>}
+              formatter={(v: string, entry: any) => {
+                const rev = entry?.payload?.revenue;
+                return (
+                  <span style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {v}
+                    {typeof rev === "number" && rev > 0 && (
+                      <span className="ml-1 text-foreground tabular-nums">· {formatBRL(rev)}</span>
+                    )}
+                  </span>
+                );
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
