@@ -1,10 +1,11 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChartCard } from "./ChartCard";
-import { formatNumber, formatPct } from "@/utils/parsers";
+import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 
 interface Slice {
   name: string;
   value: number;
+  revenue?: number;
 }
 
 const COLORS = [
