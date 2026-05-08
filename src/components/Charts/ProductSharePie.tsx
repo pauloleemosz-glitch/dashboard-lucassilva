@@ -35,7 +35,10 @@ function PieTooltip({ active, payload, total }: any) {
         <span className="w-2 h-2 rounded-full" style={{ background: p.payload.fill }} />
         <span style={{ color: p.payload.fill }}>{p.name}</span>
       </div>
-      <div className="text-foreground tabular-nums">{formatNumber(p.value)}</div>
+      <div className="text-foreground tabular-nums">{formatNumber(p.value)} vendas</div>
+      {typeof p.payload.revenue === "number" && p.payload.revenue > 0 && (
+        <div className="text-foreground tabular-nums">{formatBRL(p.payload.revenue)}</div>
+      )}
       <div className="text-muted-foreground">{formatPct(pct)} do total</div>
     </div>
   );
