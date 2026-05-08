@@ -85,7 +85,17 @@ export function ProductSharePie({
             <Legend
               wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
               iconType="circle"
-              formatter={(v: string) => <span style={{ color: "hsl(var(--muted-foreground))" }}>{v}</span>}
+              formatter={(v: string, entry: any) => {
+                const rev = entry?.payload?.revenue;
+                return (
+                  <span style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {v}
+                    {typeof rev === "number" && rev > 0 && (
+                      <span className="ml-1 text-foreground tabular-nums">· {formatBRL(rev)}</span>
+                    )}
+                  </span>
+                );
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
