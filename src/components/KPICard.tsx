@@ -1,6 +1,6 @@
-import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from "framer-motion";
 import { LucideIcon, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -27,24 +27,23 @@ const glowMap = {
 };
 
 export function KPICard({ label, value, variation, icon: Icon, color = "cyan", format, delay = 0 }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.3 });
+  const reduced = useReducedMotion();
 
   const mv = useMotionValue(0);
   const display = useTransform(mv, (v) =>
     format ? format(v) : v.toLocaleString("pt-BR", { maximumFractionDigits: 0 }),
   );
 
-  // Counter syncs with viewport entry — resets when leaving so it re-runs on scroll back
+  // Counter runs on mount/value changes; avoids invisible cards when viewport observers lag in preview.
   useEffect(() => {
     if (value === null || !Number.isFinite(value)) return;
-    if (!inView) {
-      mv.set(0);
+    if (reduced) {
+      mv.set(value);
       return;
     }
     const controls = animate(mv, value, { duration: 1.4, delay, ease: "easeOut" });
     return () => controls.stop();
-  }, [value, delay, mv, inView]);
+  }, [value, delay, mv, reduced]);
 
   const variationDisplay = (() => {
     if (variation === null || variation === undefined || !Number.isFinite(variation)) {
@@ -58,10 +57,9 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
 
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
-      animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 24, filter: "blur(6px)" }}
-      transition={{ duration: 1.2, delay, ease: [0.22, 1, 0.36, 1] }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: reduced ? 0 : 1.2, delay: reduced ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
       className="glass-card rounded-xl p-3 sm:p-5 relative overflow-hidden group hover:border-primary/40 transition-colors min-w-0"
     >
       <div
