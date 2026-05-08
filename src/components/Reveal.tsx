@@ -25,7 +25,7 @@ export function Reveal({
   direction = "up",
   distance = 24,
   className,
-  once = false,
+  once = true,
   amount = 0.15,
 }: RevealProps) {
   const reduced = useReducedMotion();
