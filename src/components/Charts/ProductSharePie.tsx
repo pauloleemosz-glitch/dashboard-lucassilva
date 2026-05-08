@@ -87,11 +87,18 @@ export function ProductSharePie({
               iconType="circle"
               formatter={(v: string, entry: any) => {
                 const rev = entry?.payload?.revenue;
+                const val = entry?.payload?.value;
+                const suffix =
+                  typeof rev === "number" && rev > 0
+                    ? formatBRL(rev)
+                    : typeof val === "number" && val > 0
+                    ? `${formatNumber(val)} leads`
+                    : null;
                 return (
                   <span style={{ color: "hsl(var(--muted-foreground))" }}>
                     {v}
-                    {typeof rev === "number" && rev > 0 && (
-                      <span className="ml-1 text-foreground tabular-nums">· {formatBRL(rev)}</span>
+                    {suffix && (
+                      <span className="ml-1 text-foreground tabular-nums">· {suffix}</span>
                     )}
                   </span>
                 );
