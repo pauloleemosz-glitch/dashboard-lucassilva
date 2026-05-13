@@ -16,6 +16,7 @@ import { SpendPurchasesCPA } from "@/components/Charts/SpendPurchasesCPA";
 import { LeadsSpendCPA } from "@/components/Charts/LeadsSpendCPA";
 import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
 import { ProductSharePie } from "@/components/Charts/ProductSharePie";
+import { AnguloMecanismoPie } from "@/components/Charts/AnguloMecanismoPie";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
@@ -209,6 +210,27 @@ function Dashboard() {
     return {
       salesShare: Array.from(sMap, ([name, value]) => ({ name, value, revenue: revMap.get(name) || 0 })),
       leadsShare: Array.from(lMap, ([name, value]) => ({ name, value })),
+    };
+  }, [filtered]);
+
+  const { anguloSalesShare, anguloLeadsShare, mecanismoSalesShare, mecanismoLeadsShare } = useMemo(() => {
+    const aS = new Map<string, number>(); const aR = new Map<string, number>(); const aL = new Map<string, number>();
+    const mS = new Map<string, number>(); const mR = new Map<string, number>(); const mL = new Map<string, number>();
+    for (const r of filtered) {
+      const ang = r.angulo || "outro";
+      const mec = r.mecanismo || "outro";
+      aS.set(ang, (aS.get(ang) || 0) + r.compras);
+      aR.set(ang, (aR.get(ang) || 0) + r.valorCompra);
+      aL.set(ang, (aL.get(ang) || 0) + r.leads);
+      mS.set(mec, (mS.get(mec) || 0) + r.compras);
+      mR.set(mec, (mR.get(mec) || 0) + r.valorCompra);
+      mL.set(mec, (mL.get(mec) || 0) + r.leads);
+    }
+    return {
+      anguloSalesShare:    Array.from(aS, ([name, value]) => ({ name, value, revenue: aR.get(name) || 0 })),
+      anguloLeadsShare:    Array.from(aL, ([name, value]) => ({ name, value })),
+      mecanismoSalesShare: Array.from(mS, ([name, value]) => ({ name, value, revenue: mR.get(name) || 0 })),
+      mecanismoLeadsShare: Array.from(mL, ([name, value]) => ({ name, value })),
     };
   }, [filtered]);
 
@@ -475,6 +497,26 @@ function Dashboard() {
             </Reveal>
             <Reveal direction="right" delay={0.1}>
               <ProductSharePie title="Participação dos Produtos · Leads" data={leadsShare} delay={0.05} />
+            </Reveal>
+          </div>
+
+          {/* Ângulo share pies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Reveal direction="left">
+              <AnguloMecanismoPie title="Ângulo · Vendas" data={anguloSalesShare} mode="vendas" />
+            </Reveal>
+            <Reveal direction="right" delay={0.1}>
+              <AnguloMecanismoPie title="Ângulo · Leads" data={anguloLeadsShare} mode="leads" delay={0.05} />
+            </Reveal>
+          </div>
+
+          {/* Mecanismo share pies */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Reveal direction="left">
+              <AnguloMecanismoPie title="Mecanismo · Vendas" data={mecanismoSalesShare} mode="vendas" />
+            </Reveal>
+            <Reveal direction="right" delay={0.1}>
+              <AnguloMecanismoPie title="Mecanismo · Leads" data={mecanismoLeadsShare} mode="leads" delay={0.05} />
             </Reveal>
           </div>
 
