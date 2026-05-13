@@ -13,6 +13,10 @@ interface FilterCtx {
   setCurso: (c: string) => void;
   modo: Modo;
   setModo: (m: Modo) => void;
+  angulo: string;
+  setAngulo: (a: string) => void;
+  mecanismo: string;
+  setMecanismo: (m: string) => void;
 }
 
 const FilterContext = createContext<FilterCtx | null>(null);
@@ -21,6 +25,8 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [cursos, setCursos] = useState<string[]>([]);
   const [modo, setModo] = useState<Modo>("perpetuo");
+  const [angulo, setAngulo] = useState<string>("all");
+  const [mecanismo, setMecanismo] = useState<string>("all");
 
   const value = useMemo(
     () => ({
@@ -32,8 +38,12 @@ export function FilterProvider({ children }: { children: ReactNode }) {
       setCurso: (c: string) => setCursos(c === "all" ? [] : [c]),
       modo,
       setModo,
+      angulo,
+      setAngulo,
+      mecanismo,
+      setMecanismo,
     }),
-    [dateRange, cursos, modo],
+    [dateRange, cursos, modo, angulo, mecanismo],
   );
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }

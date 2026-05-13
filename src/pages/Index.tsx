@@ -42,7 +42,7 @@ function aggregate(rows: AdRow[]) {
 
 function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
-  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo } = useFilters();
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, angulo, mecanismo } = useFilters();
 
   const allRows = data ?? [];
 
@@ -91,15 +91,29 @@ function Dashboard() {
   const cursoMatch = (c?: string) =>
     cursosSelecionados.length === 0 || (c ? cursosSelecionados.includes(c) : false);
 
+  const angulos = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of allRows) if (r.angulo) set.add(r.angulo);
+    return Array.from(set).sort();
+  }, [allRows]);
+
+  const mecanismos = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of allRows) if (r.mecanismo) set.add(r.mecanismo);
+    return Array.from(set).sort();
+  }, [allRows]);
+
   // Filtering
   const filtered = useMemo(() => {
     return allRows.filter((r) => {
       if (!cursoMatch(r.curso)) return false;
       if (dateRange?.from && r.date && r.date < dateRange.from) return false;
       if (dateRange?.to && r.date && r.date > dateRange.to) return false;
+      if (angulo !== "all" && r.angulo !== angulo) return false;
+      if (mecanismo !== "all" && r.mecanismo !== mecanismo) return false;
       return true;
     });
-  }, [allRows, cursosSelecionados, dateRange]);
+  }, [allRows, cursosSelecionados, dateRange, angulo, mecanismo]);
 
   // Previous period for variation
   const previousFiltered = useMemo(() => {
@@ -227,6 +241,8 @@ function Dashboard() {
       {/* Filters */}
       <GlobalFilters
         cursos={cursos}
+        angulos={angulos}
+        mecanismos={mecanismos}
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
         onRefresh={() => refetch()}
         isFetching={isFetching}

@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   cursos: string[];
+  angulos?: string[];
+  mecanismos?: string[];
   lastUpdated?: Date | null;
   onRefresh: () => void;
   isFetching: boolean;
@@ -16,8 +18,8 @@ interface Props {
   maxDate?: Date | null;
 }
 
-export function GlobalFilters({ cursos: cursosDisponiveis, lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
-  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo } = useFilters();
+export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanismos = [], lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo, angulo, setAngulo, mecanismo, setMecanismo } = useFilters();
 
   const allSelected = cursosSelecionados.length === 0;
   const toggleCurso = (c: string) => {
@@ -149,6 +151,90 @@ export function GlobalFilters({ cursos: cursosDisponiveis, lastUpdated, onRefres
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* Ângulo */}
+      {angulos.length > 0 && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "inline-flex items-center justify-between gap-2 w-[170px] px-3 py-2 rounded-md border text-sm transition-colors",
+                angulo !== "all"
+                  ? "border-neon-cyan/60 bg-primary/10 text-neon-cyan"
+                  : "border-primary/30 hover:border-neon-cyan hover:bg-primary/5 text-muted-foreground",
+              )}
+            >
+              <span className="truncate capitalize">{angulo === "all" ? "Ângulo" : angulo}</span>
+              <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-1 glass-card border-primary/30" align="start">
+            <button
+              onClick={() => setAngulo("all")}
+              className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
+            >
+              <span className="w-4 h-4 inline-flex items-center justify-center">
+                {angulo === "all" && <Check className="h-3.5 w-3.5 text-neon-cyan" />}
+              </span>
+              Todos os ângulos
+            </button>
+            {angulos.map((a) => (
+              <button
+                key={a}
+                onClick={() => setAngulo(a)}
+                className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2 capitalize"
+              >
+                <span className="w-4 h-4 inline-flex items-center justify-center">
+                  {angulo === a && <Check className="h-3 w-3 text-neon-cyan" />}
+                </span>
+                {a}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
+
+      {/* Mecanismo */}
+      {mecanismos.length > 0 && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "inline-flex items-center justify-between gap-2 w-[170px] px-3 py-2 rounded-md border text-sm transition-colors",
+                mecanismo !== "all"
+                  ? "border-neon-cyan/60 bg-primary/10 text-neon-cyan"
+                  : "border-primary/30 hover:border-neon-cyan hover:bg-primary/5 text-muted-foreground",
+              )}
+            >
+              <span className="truncate capitalize">{mecanismo === "all" ? "Mecanismo" : mecanismo}</span>
+              <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-1 glass-card border-primary/30" align="start">
+            <button
+              onClick={() => setMecanismo("all")}
+              className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
+            >
+              <span className="w-4 h-4 inline-flex items-center justify-center">
+                {mecanismo === "all" && <Check className="h-3.5 w-3.5 text-neon-cyan" />}
+              </span>
+              Todos os mecanismos
+            </button>
+            {mecanismos.map((m) => (
+              <button
+                key={m}
+                onClick={() => setMecanismo(m)}
+                className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2 capitalize"
+              >
+                <span className="w-4 h-4 inline-flex items-center justify-center">
+                  {mecanismo === m && <Check className="h-3 w-3 text-neon-cyan" />}
+                </span>
+                {m}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
 
       {/* Toggle Perpétuo / Lead / Geral */}
       <div className="inline-flex items-center rounded-md border border-primary/30 p-0.5">
