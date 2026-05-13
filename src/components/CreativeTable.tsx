@@ -7,9 +7,39 @@ import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/pars
 import { cn } from "@/lib/utils";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
+const ANGULO_COLORS: Record<string, string> = {
+  urgência: "bg-red-500/20 text-red-400 border-red-500/30",
+  bônus: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  "prova social": "bg-green-500/20 text-green-400 border-green-500/30",
+  autoridade: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  curiosidade: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  dor: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  transformação: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+};
+
+function AngleBadge({ angulo, mecanismo }: { angulo?: string; mecanismo?: string }) {
+  if (!angulo && !mecanismo) return null;
+  return (
+    <div className="flex gap-1 flex-wrap mt-0.5">
+      {angulo && (
+        <span className={cn("inline-flex px-1.5 py-0.5 rounded text-[9px] border capitalize", ANGULO_COLORS[angulo] || "bg-primary/10 text-muted-foreground border-primary/20")}>
+          {angulo}
+        </span>
+      )}
+      {mecanismo && (
+        <span className="inline-flex px-1.5 py-0.5 rounded text-[9px] border bg-primary/10 text-muted-foreground border-primary/20 capitalize">
+          {mecanismo}
+        </span>
+      )}
+    </div>
+  );
+}
+
 interface AggRow {
   adName: string;
   curso: string;
+  angulo?: string;
+  mecanismo?: string;
   link?: string;
   driveId?: string | null;
   leads: number;
@@ -41,6 +71,8 @@ function aggregate(rows: AdRow[]): AggRow[] {
       map.set(key, {
         adName: r.adName,
         curso: r.curso || "—",
+        angulo: r.angulo,
+        mecanismo: r.mecanismo,
         link: r.link,
         driveId,
         leads: r.leads,
@@ -263,6 +295,7 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
                       )}
                     </HoverCard>
                     <div className="truncate text-[10px] text-neon-cyan/70 uppercase tracking-wider">{r.curso}</div>
+                    <AngleBadge angulo={r.angulo} mecanismo={r.mecanismo} />
                   </td>
                   {cols.map((c) => {
                     const v = r[c.key];

@@ -37,9 +37,32 @@ export interface AdRow {
 
 const SHEET_ID = (import.meta.env.VITE_SHEET_ID as string) || "1my3EGzjPQgHKX_Q1WUr3PhWSDvODVUFKISIC2gDz5p8";
 
+interface CreativeAnalysis {
+  angulo: string;
+  mecanismo: string;
+}
+
+async function fetchAnalysis(): Promise<Map<string, CreativeAnalysis>> {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=criativos_angulos`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return new Map();
+    const text = await res.text();
+    const parsed = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true });
+    const map = new Map<string, CreativeAnalysis>();
+    for (const r of parsed.data) {
+      const id = (r["drive_id"] || "").trim();
+      if (id) map.set(id, { angulo: r["angulo"] || "", mecanismo: r["mecanismo"] || "" });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 async function fetchSheet(): Promise<AdRow[]> {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-  const res = await fetch(url);
+  const [res, analysisMap] = await Promise.all([fetch(url), fetchAnalysis()]);
   if (!res.ok) throw new Error(`Erro ao carregar planilha (${res.status})`);
   const text = await res.text();
 
@@ -52,11 +75,13 @@ async function fetchSheet(): Promise<AdRow[]> {
     .map((r) => {
       const num = (k: string) => parseBRNumber(r[k]) ?? 0;
       const numN = (k: string) => parseBRNumber(r[k]);
+      const adName = r["Ad Name"] || "";
+      const analysis = analysisMap.get(adName);
       return {
         date: parseDate(r["Date"]),
         campaign: r["Campaign Name"] || "",
         adset: r["Adset Name"] || "",
-        adName: r["Ad Name"] || "",
+        adName,
         spend: num("Spend (Cost, Amount Spent)"),
         impressions: num("Impressions"),
         clicks: num("Clicks"),
@@ -79,8 +104,8 @@ async function fetchSheet(): Promise<AdRow[]> {
         compraLP: num("Compra LP1108 - v3"),
         valorCompraLP: num("Valor de conversão de Compra LP1108 - v3"),
         curso: r["Curso / Produto"] || "Sem categoria",
-        angulo: r["Ângulo"] || r["Angulo"] || r["Angle"] || "",
-        mecanismo: r["Mecanismo"] || r["Mechanism"] || "",
+        angulo: analysis?.angulo || "",
+        mecanismo: analysis?.mecanismo || "",
       };
     })
     .filter((r) => r.adName);
