@@ -88,6 +88,8 @@
 
   html {
     background: hsl(var(--background));
+    overflow-x: hidden;
+    width: 100%;
   }
 
   body {
@@ -104,6 +106,14 @@
     animation: bg-drift 18s ease-in-out infinite;
     min-height: 100vh;
     position: relative;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
