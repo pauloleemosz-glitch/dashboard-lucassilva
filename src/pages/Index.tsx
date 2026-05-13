@@ -91,18 +91,6 @@ function Dashboard() {
   const cursoMatch = (c?: string) =>
     cursosSelecionados.length === 0 || (c ? cursosSelecionados.includes(c) : false);
 
-  const angulos = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of allRows) if (r.angulo) set.add(r.angulo);
-    return Array.from(set).sort();
-  }, [allRows]);
-
-  const mecanismos = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of allRows) if (r.mecanismo) set.add(r.mecanismo);
-    return Array.from(set).sort();
-  }, [allRows]);
-
   // Filtering
   const filtered = useMemo(() => {
     return allRows.filter((r) => {
@@ -114,6 +102,28 @@ function Dashboard() {
       return true;
     });
   }, [allRows, cursosSelecionados, dateRange, angulo, mecanismo]);
+
+  // Ângulos e mecanismos disponíveis no subset curso+data (sem filtrar por ângulo/mecanismo)
+  const rowsForOptions = useMemo(() => {
+    return allRows.filter((r) => {
+      if (!cursoMatch(r.curso)) return false;
+      if (dateRange?.from && r.date && r.date < dateRange.from) return false;
+      if (dateRange?.to && r.date && r.date > dateRange.to) return false;
+      return true;
+    });
+  }, [allRows, cursosSelecionados, dateRange]);
+
+  const angulos = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rowsForOptions) if (r.angulo) set.add(r.angulo);
+    return Array.from(set).sort();
+  }, [rowsForOptions]);
+
+  const mecanismos = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rowsForOptions) if (r.mecanismo) set.add(r.mecanismo);
+    return Array.from(set).sort();
+  }, [rowsForOptions]);
 
   // Previous period for variation
   const previousFiltered = useMemo(() => {
