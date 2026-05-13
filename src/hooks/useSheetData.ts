@@ -29,6 +29,8 @@ export interface AdRow {
   compraLP: number;
   valorCompraLP: number;
   curso: string;
+  angulo?: string;
+  mecanismo?: string;
   link?: string;
   thumbnail?: string;
 }
@@ -77,6 +79,8 @@ async function fetchSheet(): Promise<AdRow[]> {
         compraLP: num("Compra LP1108 - v3"),
         valorCompraLP: num("Valor de conversão de Compra LP1108 - v3"),
         curso: r["Curso / Produto"] || "Sem categoria",
+        angulo: r["Ângulo"] || r["Angulo"] || r["Angle"] || "",
+        mecanismo: r["Mecanismo"] || r["Mechanism"] || "",
       };
     })
     .filter((r) => r.adName);
