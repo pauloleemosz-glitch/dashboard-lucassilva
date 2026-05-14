@@ -1,6 +1,7 @@
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, RefreshCw, Check, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,6 +21,8 @@ interface Props {
 
 export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanismos = [], lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
   const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo, angulo, setAngulo, mecanismo, setMecanismo } = useFilters();
+  const [anguloOpen, setAnguloOpen] = useState(false);
+  const [mecanismoOpen, setMecanismoOpen] = useState(false);
 
   const allSelected = cursosSelecionados.length === 0;
   const toggleCurso = (c: string) => {
@@ -154,7 +157,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
       {/* Ângulo */}
       {angulos.length > 0 && (
-        <Popover modal={false}>
+        <Popover open={anguloOpen} onOpenChange={setAnguloOpen}>
           <PopoverTrigger asChild>
             <button
               className={cn(
@@ -170,7 +173,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-1 glass-card border-primary/30" align="start">
             <button
-              onClick={() => setAngulo("all")}
+              onClick={() => { setAngulo("all"); setAnguloOpen(false); }}
               className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
             >
               <span className="w-4 h-4 inline-flex items-center justify-center">
@@ -181,7 +184,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
             {angulos.map((a) => (
               <button
                 key={a}
-                onClick={() => setAngulo(a)}
+                onClick={() => { setAngulo(a); setAnguloOpen(false); }}
                 className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2 capitalize"
               >
                 <span className="w-4 h-4 inline-flex items-center justify-center">
@@ -196,7 +199,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
       {/* Mecanismo */}
       {mecanismos.length > 0 && (
-        <Popover modal={false}>
+        <Popover open={mecanismoOpen} onOpenChange={setMecanismoOpen}>
           <PopoverTrigger asChild>
             <button
               className={cn(
@@ -212,7 +215,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-1 glass-card border-primary/30" align="start">
             <button
-              onClick={() => setMecanismo("all")}
+              onClick={() => { setMecanismo("all"); setMecanismoOpen(false); }}
               className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
             >
               <span className="w-4 h-4 inline-flex items-center justify-center">
@@ -223,7 +226,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
             {mecanismos.map((m) => (
               <button
                 key={m}
-                onClick={() => setMecanismo(m)}
+                onClick={() => { setMecanismo(m); setMecanismoOpen(false); }}
                 className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2 capitalize"
               >
                 <span className="w-4 h-4 inline-flex items-center justify-center">
