@@ -52,7 +52,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
   return (
     <div className="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3">
       {/* Date range */}
-      <Popover>
+      <Popover modal={false}>
         <PopoverTrigger asChild>
           <button
             className={cn(
@@ -107,7 +107,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
       </Popover>
 
       {/* Curso (multi-seleção) */}
-      <Popover>
+      <Popover modal={false}>
         <PopoverTrigger asChild>
           <button
             className={cn(
@@ -154,7 +154,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
       {/* Ângulo */}
       {angulos.length > 0 && (
-        <Popover>
+        <Popover modal={false}>
           <PopoverTrigger asChild>
             <button
               className={cn(
@@ -196,7 +196,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
       {/* Mecanismo */}
       {mecanismos.length > 0 && (
-        <Popover>
+        <Popover modal={false}>
           <PopoverTrigger asChild>
             <button
               className={cn(
