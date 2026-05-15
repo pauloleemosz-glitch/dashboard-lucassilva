@@ -43,7 +43,7 @@ function aggregate(rows: AdRow[]) {
 
 function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
-  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, angulo, mecanismo } = useFilters();
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, angulosSel, mecanismosSel } = useFilters();
 
   const allRows = data ?? [];
 
@@ -98,11 +98,11 @@ function Dashboard() {
       if (!cursoMatch(r.curso)) return false;
       if (dateRange?.from && r.date && r.date < dateRange.from) return false;
       if (dateRange?.to && r.date && r.date > dateRange.to) return false;
-      if (angulo !== "all" && r.angulo !== angulo) return false;
-      if (mecanismo !== "all" && r.mecanismo !== mecanismo) return false;
+      if (angulosSel.length > 0 && !angulosSel.includes(r.angulo ?? "")) return false;
+      if (mecanismosSel.length > 0 && !mecanismosSel.includes(r.mecanismo ?? "")) return false;
       return true;
     });
-  }, [allRows, cursosSelecionados, dateRange, angulo, mecanismo]);
+  }, [allRows, cursosSelecionados, dateRange, angulosSel, mecanismosSel]);
 
   // Ângulos e mecanismos disponíveis no subset curso+data (sem filtrar por ângulo/mecanismo)
   const rowsForOptions = useMemo(() => {
