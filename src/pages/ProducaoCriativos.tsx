@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 import {
   fetchBiblioteca,
   fetchSugestoes,
+  fetchProdutosAtivos,
   gerarSugestoes,
   atualizarStatus,
+  type ProdutoAtivo,
   type Sugestao,
   type Vencedor,
 } from "@/lib/criativos-api";
@@ -253,12 +255,73 @@ function FilterGroup<T extends string>({
   );
 }
 
+function ProdutoPicker({
+  produtos,
+  selecionado,
+  onSelecionar,
+}: {
+  produtos: ProdutoAtivo[];
+  selecionado: string | null;
+  onSelecionar: (p: string | null) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">
+        Produto p/ gerar:
+      </span>
+      <div className="flex gap-1.5 flex-wrap items-center">
+        <button
+          onClick={() => onSelecionar(null)}
+          title="Detectar automaticamente pelo produto com maior performance na biblioteca"
+          className={cn(
+            "px-3 py-1 rounded-md text-xs uppercase tracking-wider transition-colors border",
+            selecionado === null
+              ? "bg-primary/15 text-neon-cyan border-primary/40"
+              : "text-muted-foreground border-border/40 hover:text-foreground",
+          )}
+        >
+          🪄 Auto
+        </button>
+        {produtos.length === 0 && (
+          <span className="text-[11px] text-muted-foreground italic">
+            (carregando produtos ativos…)
+          </span>
+        )}
+        {produtos.map((p) => (
+          <button
+            key={p.produto}
+            onClick={() => onSelecionar(p.produto)}
+            title={`R$ ${p.spend_recente.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+            })} nos últimos 7 dias · ${p.ads_rodando} ads · ${p.dias_ativo} dias`}
+            className={cn(
+              "px-3 py-1 rounded-md text-xs uppercase tracking-wider transition-colors border flex items-center gap-1.5",
+              selecionado === p.produto
+                ? "bg-primary/15 text-neon-cyan border-primary/40"
+                : "text-muted-foreground border-border/40 hover:text-foreground",
+            )}
+          >
+            {p.produto}
+            <span className="text-[10px] opacity-60 normal-case">· {p.ads_rodando}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Sugestoes({
   sugestoes,
   onStatus,
+  produtosAtivos,
+  produtoSelecionado,
+  onSelecionarProduto,
 }: {
   sugestoes: Sugestao[];
   onStatus: (id: string, st: Sugestao["status"]) => void;
+  produtosAtivos: ProdutoAtivo[];
+  produtoSelecionado: string | null;
+  onSelecionarProduto: (p: string | null) => void;
 }) {
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("novo");
   const [filtroFormato, setFiltroFormato] = useState<FiltroFormato>("todos");
@@ -310,6 +373,13 @@ function Sugestoes({
             { value: "video", label: "Vídeo" },
           ]}
         />
+
+        <ProdutoPicker
+          produtos={produtosAtivos}
+          selecionado={produtoSelecionado}
+          onSelecionar={onSelecionarProduto}
+        />
+
         <span className="ml-auto text-xs text-muted-foreground">
           {filtradas.length} de {sugestoes.length}
         </span>
@@ -428,15 +498,22 @@ export default function ProducaoCriativos() {
   const [tab, setTab] = useState<Tab>("sugestoes");
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
   const [vencedores, setVencedores] = useState<Vencedor[]>([]);
+  const [produtosAtivos, setProdutosAtivos] = useState<ProdutoAtivo[]>([]);
+  const [produtoSelecionado, setProdutoSelecionado] = useState<string | null>(null); // null = auto
   const [loading, setLoading] = useState(true);
   const [gerando, setGerando] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, v] = await Promise.all([fetchSugestoes(), fetchBiblioteca()]);
+      const [s, v, p] = await Promise.all([
+        fetchSugestoes(),
+        fetchBiblioteca(),
+        fetchProdutosAtivos(7).catch(() => [] as ProdutoAtivo[]),
+      ]);
       setSugestoes(s);
       setVencedores(v);
+      setProdutosAtivos(p);
     } catch (e) {
       toast.error(`Erro: ${e}`);
     } finally {
@@ -451,7 +528,7 @@ export default function ProducaoCriativos() {
   const onGerar = async () => {
     setGerando(true);
     try {
-      const r = await gerarSugestoes();
+      const r = await gerarSugestoes(produtoSelecionado || undefined);
       toast.success(`${r.imagens} imagens + ${r.videos} vídeos gerados para "${r.produto}"`);
       await carregar();
     } catch (e) {
@@ -523,6 +600,11 @@ export default function ProducaoCriativos() {
         <Button
           onClick={onGerar}
           disabled={gerando}
+          title={
+            produtoSelecionado
+              ? `Vai gerar para: ${produtoSelecionado}`
+              : "Vai gerar para o produto com maior performance na biblioteca (modo auto)"
+          }
           className="gap-2 bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/40 hover:border-fuchsia-300/70 hover:shadow-[0_0_18px_hsl(280_85%_60%/0.35)] text-neon-cyan uppercase tracking-wider text-xs"
           variant="outline"
         >
@@ -534,7 +616,7 @@ export default function ProducaoCriativos() {
           ) : (
             <>
               <Sparkles className="h-4 w-4" />
-              Gerar novas sugestões
+              Gerar novas {produtoSelecionado ? `· ${produtoSelecionado}` : "(auto)"}
             </>
           )}
         </Button>
@@ -551,7 +633,13 @@ export default function ProducaoCriativos() {
             <p className="text-sm text-muted-foreground">Carregando…</p>
           </Card>
         ) : tab === "sugestoes" ? (
-          <Sugestoes sugestoes={sugestoes} onStatus={onStatus} />
+          <Sugestoes
+            sugestoes={sugestoes}
+            onStatus={onStatus}
+            produtosAtivos={produtosAtivos}
+            produtoSelecionado={produtoSelecionado}
+            onSelecionarProduto={setProdutoSelecionado}
+          />
         ) : (
           <Biblioteca vencedores={vencedores} />
         )}

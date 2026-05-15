@@ -57,13 +57,30 @@ export async function fetchSugestoes(): Promise<Sugestao[]> {
   return r.json();
 }
 
-export async function gerarSugestoes(): Promise<{
+export type ProdutoAtivo = {
+  produto: string;
+  spend_recente: number;
+  ads_rodando: number;
+  dias_ativo: number;
+};
+
+export async function fetchProdutosAtivos(dias = 7): Promise<ProdutoAtivo[]> {
+  const r = await fetch(`${API_BASE}/api/produtos-ativos?dias=${dias}`);
+  if (!r.ok) throw new Error(`produtos-ativos: ${r.status}`);
+  return r.json();
+}
+
+export async function gerarSugestoes(produto?: string): Promise<{
   ok: boolean;
   produto: string;
   imagens: number;
   videos: number;
 }> {
-  const r = await fetch(`${API_BASE}/api/gerar`, { method: "POST" });
+  const r = await fetch(`${API_BASE}/api/gerar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(produto ? { produto } : {}),
+  });
   if (!r.ok) throw new Error(`gerar: ${r.status} — ${await r.text()}`);
   return r.json();
 }
