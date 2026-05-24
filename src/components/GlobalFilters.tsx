@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanismos = [], lastUpdated, onRefresh, isFetching, minDate, maxDate }: Props) {
-  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo, angulosSel, setAngulosSel, mecanismosSel, setMecanismosSel } = useFilters();
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, setModo, plataforma, setPlataforma, angulosSel, setAngulosSel, mecanismosSel, setMecanismosSel } = useFilters();
 
   const allSelected = cursosSelecionados.length === 0;
   const toggleCurso = (c: string) => {
@@ -52,6 +52,27 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
   return (
     <div className="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3">
+      {/* Plataforma: Combinado / Meta / Google */}
+      <div className="inline-flex items-center rounded-md border border-neon-cyan/40 p-0.5 bg-primary/5">
+        {([
+          { v: "combinado", label: "Combinado" },
+          { v: "meta", label: "Meta" },
+          { v: "google", label: "Google" },
+        ] as const).map((p) => (
+          <button
+            key={p.v}
+            onClick={() => setPlataforma(p.v)}
+            className={cn(
+              "px-3 py-1.5 text-xs rounded transition-all",
+              plataforma === p.v ? "bg-primary/25 text-neon-cyan" : "text-muted-foreground hover:text-foreground",
+            )}
+            style={plataforma === p.v ? { boxShadow: "0 0 12px hsl(var(--neon-cyan) / 0.45)" } : undefined}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* Date range */}
       <Popover modal={false}>
         <PopoverTrigger asChild>
@@ -154,7 +175,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
       </Popover>
 
       {/* Ângulo (multi-seleção) */}
-      {angulos.length > 0 && (
+      {angulos.length > 0 && plataforma !== "google" && (
         <Popover modal={false}>
           <PopoverTrigger asChild>
             {(() => {
@@ -216,7 +237,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
       )}
 
       {/* Mecanismo (multi-seleção) */}
-      {mecanismos.length > 0 && (
+      {mecanismos.length > 0 && plataforma !== "google" && (
         <Popover modal={false}>
           <PopoverTrigger asChild>
             {(() => {
@@ -277,7 +298,8 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
         </Popover>
       )}
 
-      {/* Toggle Perpétuo / Lead / Geral */}
+      {/* Toggle Perpétuo / Lead / Geral (somente Meta) */}
+      {plataforma !== "google" && (
       <div className="inline-flex items-center rounded-md border border-primary/30 p-0.5">
         {(["perpetuo", "lead", "geral"] as const).map((m) => (
           <button
@@ -295,6 +317,7 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
           </button>
         ))}
       </div>
+      )}
 
       <div className="ml-auto flex items-center gap-3">
         {lastUpdated && (

@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 
 export type Modo = "perpetuo" | "lead" | "geral";
+export type Plataforma = "combinado" | "meta" | "google";
 
 interface FilterCtx {
   dateRange: DateRange | undefined;
@@ -13,6 +14,8 @@ interface FilterCtx {
   setCurso: (c: string) => void;
   modo: Modo;
   setModo: (m: Modo) => void;
+  plataforma: Plataforma;
+  setPlataforma: (p: Plataforma) => void;
   angulosSel: string[];
   setAngulosSel: (a: string[]) => void;
   mecanismosSel: string[];
@@ -25,6 +28,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [cursos, setCursos] = useState<string[]>([]);
   const [modo, setModo] = useState<Modo>("perpetuo");
+  const [plataforma, setPlataforma] = useState<Plataforma>("combinado");
   const [angulosSel, setAngulosSel] = useState<string[]>([]);
   const [mecanismosSel, setMecanismosSel] = useState<string[]>([]);
 
@@ -38,12 +42,14 @@ export function FilterProvider({ children }: { children: ReactNode }) {
       setCurso: (c: string) => setCursos(c === "all" ? [] : [c]),
       modo,
       setModo,
+      plataforma,
+      setPlataforma,
       angulosSel,
       setAngulosSel,
       mecanismosSel,
       setMecanismosSel,
     }),
-    [dateRange, cursos, modo, angulosSel, mecanismosSel],
+    [dateRange, cursos, modo, plataforma, angulosSel, mecanismosSel],
   );
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }

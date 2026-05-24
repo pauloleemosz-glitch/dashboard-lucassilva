@@ -17,6 +17,9 @@ import { LeadsSpendCPA } from "@/components/Charts/LeadsSpendCPA";
 import { LPViewsClicksLeads } from "@/components/Charts/LPViewsClicksLeads";
 import { ProductSharePie } from "@/components/Charts/ProductSharePie";
 import { AnguloMecanismoPie } from "@/components/Charts/AnguloMecanismoPie";
+import { useGoogleAdsData, GoogleAdRow } from "@/hooks/useGoogleAdsData";
+import { GoogleSection } from "@/components/Google/GoogleSection";
+import { GoogleKpis, CombinedKpis, GoogleAgg, emptyGoogleAgg } from "@/components/Google/GoogleKpis";
 import { cpc, cpm, ctr, cpaPerpetuo, cpaLancamento, variacaoPct } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { format } from "date-fns";
@@ -43,7 +46,11 @@ function aggregate(rows: AdRow[]) {
 
 function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
-  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, angulosSel, mecanismosSel } = useFilters();
+  const { data: googleData, isLoading: googleLoading, isFetching: googleFetching, refetch: googleRefetch } = useGoogleAdsData();
+  const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, plataforma, angulosSel, mecanismosSel } = useFilters();
+
+  const showMeta = plataforma !== "google";
+  const showGoogle = plataforma !== "meta";
 
   const allRows = data ?? [];
 
@@ -141,6 +148,43 @@ function Dashboard() {
 
   const agg = aggregate(filtered);
   const prevAgg = aggregate(previousFiltered);
+
+  // ── Google Ads: filtragem por período + agregados ──────────────────────────
+  const googleAll = googleData ?? { ads: [], keywords: [], searchTerms: [] };
+  const gFiltered = useMemo(() => {
+    const f = dateRange?.from;
+    const t = dateRange?.to;
+    const within = (d: Date | null) => {
+      if (!d) return false;
+      if (f && d < f) return false;
+      if (t && d > t) return false;
+      return true;
+    };
+    return {
+      ads: googleAll.ads.filter((r) => within(r.date)),
+      keywords: googleAll.keywords.filter((r) => within(r.date)),
+      searchTerms: googleAll.searchTerms.filter((r) => within(r.date)),
+    };
+  }, [googleAll, dateRange]);
+
+  const aggGoogle = (ads: GoogleAdRow[]): GoogleAgg =>
+    ads.reduce((a, r) => {
+      a.spend += r.cost;
+      a.impressions += r.impressions;
+      a.clicks += r.clicks;
+      a.conversions += r.conversions;
+      a.convValue += r.convValue;
+      return a;
+    }, emptyGoogleAgg());
+
+  const gAgg = aggGoogle(gFiltered.ads);
+  const gPrevAgg = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return emptyGoogleAgg();
+    const span = dateRange.to.getTime() - dateRange.from.getTime();
+    const prevTo = new Date(dateRange.from.getTime() - 1);
+    const prevFrom = new Date(prevTo.getTime() - span);
+    return aggGoogle(googleAll.ads.filter((r) => r.date && r.date >= prevFrom && r.date <= prevTo));
+  }, [googleAll, dateRange]);
 
   const cpaCurrent = modo === "lead" ? cpaLancamento(agg.spend, agg.leads) : cpaPerpetuo(agg.spend, agg.compras);
   const cpaPrev = modo === "lead" ? cpaLancamento(prevAgg.spend, prevAgg.leads) : cpaPerpetuo(prevAgg.spend, prevAgg.compras);
@@ -255,7 +299,7 @@ function Dashboard() {
       <motion.header initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-light tracking-tight gradient-text-anim">
-            META // ADS dashboard
+            {plataforma === "google" ? "GOOGLE // ADS dashboard" : plataforma === "meta" ? "META // ADS dashboard" : "META + GOOGLE // ADS dashboard"}
           </h1>
         </div>
         <motion.img
@@ -276,13 +320,13 @@ function Dashboard() {
         angulos={angulos}
         mecanismos={mecanismos}
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
-        onRefresh={() => refetch()}
-        isFetching={isFetching}
+        onRefresh={() => { refetch(); googleRefetch(); }}
+        isFetching={isFetching || googleFetching}
         minDate={minDate}
         maxDate={maxDate}
       />
 
-      {isLoading ? (
+      {((showMeta && isLoading) || (showGoogle && googleLoading)) ? (
         <div className="space-y-5 animate-fade-in">
           {/* KPI skeletons */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -315,6 +359,11 @@ function Dashboard() {
       ) : (
         <>
           {/* KPIs */}
+          {plataforma === "combinado" && (
+            <CombinedKpis meta={agg} metaPrev={prevAgg} google={gAgg} googlePrev={gPrevAgg} />
+          )}
+          {plataforma === "google" && <GoogleKpis agg={gAgg} prev={gPrevAgg} />}
+          {plataforma === "meta" && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
@@ -342,8 +391,9 @@ function Dashboard() {
               delay={0.35}
             />
           </div>
+          )}
 
-          {modo === "lead" && (
+          {plataforma === "meta" && modo === "lead" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KPICard
                 label="Visualizações da Página"
@@ -392,7 +442,7 @@ function Dashboard() {
             </div>
           )}
 
-          {modo === "perpetuo" && (
+          {plataforma === "meta" && modo === "perpetuo" && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KPICard
                 label="Visualizações da Página"
@@ -441,6 +491,8 @@ function Dashboard() {
             </div>
           )}
 
+          {showMeta && (
+          <>
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
@@ -524,12 +576,23 @@ function Dashboard() {
           <Reveal direction="up" amount={0.1}>
             <CreativeTable rows={filtered} />
           </Reveal>
+          </>
+          )}
+
+          {/* Google Ads section */}
+          {showGoogle && (
+            <GoogleSection ads={gFiltered.ads} keywords={gFiltered.keywords} searchTerms={gFiltered.searchTerms} />
+          )}
 
           {/* Footer */}
           <Reveal direction="up">
             <div className="text-center text-[10px] text-muted-foreground pt-4 tracking-widest uppercase">
               <TrendingUp className="inline h-3 w-3 mr-1 text-neon-cyan" />
-              {filtered.length.toLocaleString("pt-BR")} registros · {formatNumber(agg.impressions)} impressões totais
+              {plataforma === "google"
+                ? `${gFiltered.ads.length.toLocaleString("pt-BR")} registros Google · ${formatNumber(gAgg.impressions)} impressões`
+                : plataforma === "meta"
+                  ? `${filtered.length.toLocaleString("pt-BR")} registros · ${formatNumber(agg.impressions)} impressões totais`
+                  : `${filtered.length.toLocaleString("pt-BR")} Meta + ${gFiltered.ads.length.toLocaleString("pt-BR")} Google · ${formatNumber(agg.impressions + gAgg.impressions)} impressões`}
             </div>
           </Reveal>
         </>
