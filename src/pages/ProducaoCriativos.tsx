@@ -1,10 +1,21 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Image as ImageIcon, Video, Copy, Check, RefreshCw, BookOpen, Lightbulb, Loader2, Palette, FolderOpen, ExternalLink } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Video, Copy, Check, RefreshCw, BookOpen, Lightbulb, Loader2, Palette, FolderOpen, ExternalLink, Wand2, PencilLine } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -13,8 +24,11 @@ import {
   fetchProdutosAtivos,
   fetchReferencias,
   toggleReferencia,
+  sugerirTextos,
+  gerarComReferencia,
   gerarSugestoes,
   atualizarStatus,
+  type CampoTexto,
   type ProdutoAtivo,
   type Referencia,
   type Sugestao,
@@ -530,12 +544,182 @@ function corChip(c: string) {
   );
 }
 
+function safeParseCampos(s: string | null): CampoTexto[] {
+  if (!s) return [];
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function FormularioReferencia({
+  referencia,
+  produtosAtivos,
+  onClose,
+  onGerado,
+}: {
+  referencia: Referencia | null;
+  produtosAtivos: ProdutoAtivo[];
+  onClose: () => void;
+  onGerado: () => void;
+}) {
+  const campos = useMemo(() => safeParseCampos(referencia?.campos_texto ?? null), [referencia]);
+  const [valores, setValores] = useState<Record<string, string>>({});
+  const [produto, setProduto] = useState<string>("");
+  const [preenchendo, setPreenchendo] = useState(false);
+  const [gerando, setGerando] = useState(false);
+
+  // reseta ao trocar de referência
+  useEffect(() => {
+    setValores({});
+    setProduto("");
+  }, [referencia?.id]);
+
+  if (!referencia) return null;
+
+  const setCampo = (id: string, v: string) => setValores((p) => ({ ...p, [id]: v }));
+
+  const preencherComIA = async () => {
+    setPreenchendo(true);
+    try {
+      const r = await sugerirTextos(referencia.id, produto || undefined);
+      setValores((prev) => ({ ...prev, ...r.campos }));
+      if (!produto && r.produto) setProduto(r.produto);
+      toast.success("Campos preenchidos pela IA — pode editar antes de gerar");
+    } catch (e) {
+      toast.error(`Falha ao preencher: ${e}`);
+    } finally {
+      setPreenchendo(false);
+    }
+  };
+
+  const gerar = async () => {
+    setGerando(true);
+    try {
+      const r = await gerarComReferencia(referencia.id, valores, produto || undefined);
+      toast.success(`Criativo gerado para "${r.produto}" — veja na aba Sugestões`);
+      onGerado();
+      onClose();
+    } catch (e) {
+      toast.error(`Falha ao gerar: ${e}`);
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!referencia} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto glass-card">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-neon-magenta" />
+            Criar criativo
+          </DialogTitle>
+          <DialogDescription>
+            Layout <strong>{referencia.estilo_geral || "referência"}</strong>. Preencha os textos de
+            cada parte — ou deixe a IA preencher e depois ajuste.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* produto */}
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Produto
+            </Label>
+            <select
+              value={produto}
+              onChange={(e) => setProduto(e.target.value)}
+              className="mt-1 w-full bg-background/60 border border-border/60 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="">🪄 Auto (maior performance)</option>
+              {produtosAtivos.map((p) => (
+                <option key={p.produto} value={p.produto}>
+                  {p.produto}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {campos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Esta referência não tem campos de texto mapeados. Reprocesse com o script de
+              sincronização pra extrair os campos.
+            </p>
+          ) : (
+            campos.map((c) => {
+              const val = valores[c.id] || "";
+              const over = c.max_chars ? val.length > c.max_chars : false;
+              const isLong = (c.max_chars || 40) > 60;
+              return (
+                <div key={c.id}>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">{c.label}</Label>
+                    {c.max_chars && (
+                      <span className={cn("text-[10px]", over ? "text-destructive" : "text-muted-foreground")}>
+                        {val.length}/{c.max_chars}
+                      </span>
+                    )}
+                  </div>
+                  {c.descricao && (
+                    <p className="text-[11px] text-muted-foreground mb-1">{c.descricao}</p>
+                  )}
+                  {isLong ? (
+                    <Textarea
+                      value={val}
+                      placeholder={c.placeholder}
+                      onChange={(e) => setCampo(c.id, e.target.value)}
+                      className="text-sm"
+                      rows={2}
+                    />
+                  ) : (
+                    <Input
+                      value={val}
+                      placeholder={c.placeholder}
+                      onChange={(e) => setCampo(c.id, e.target.value)}
+                      className="text-sm"
+                    />
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button
+            variant="outline"
+            onClick={preencherComIA}
+            disabled={preenchendo || gerando}
+            className="gap-2 text-xs uppercase tracking-wider"
+          >
+            {preenchendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            IA preenche os campos
+          </Button>
+          <Button
+            onClick={gerar}
+            disabled={gerando || preenchendo || campos.length === 0}
+            className="gap-2 bg-gradient-to-r from-fuchsia-500/30 to-cyan-500/30 border border-fuchsia-400/50 text-white text-xs uppercase tracking-wider"
+          >
+            {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Gerar imagem
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Referencias({
   referencias,
   onToggle,
+  onCriar,
 }: {
   referencias: Referencia[];
   onToggle: (id: string, ativo: 0 | 1) => void;
+  onCriar: (r: Referencia) => void;
 }) {
   const ativas = referencias.filter((r) => r.ativo === 1).length;
 
@@ -643,6 +827,15 @@ function Referencias({
                     ))}
                   </div>
                 )}
+
+                <Button
+                  onClick={() => onCriar(r)}
+                  className="w-full mt-4 gap-2 bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/40 hover:border-fuchsia-300/70 text-neon-cyan text-xs uppercase tracking-wider"
+                  variant="outline"
+                >
+                  <PencilLine className="h-4 w-4" />
+                  Criar criativo com esta referência
+                </Button>
               </Card>
             );
           })}
@@ -659,6 +852,7 @@ export default function ProducaoCriativos() {
   const [produtosAtivos, setProdutosAtivos] = useState<ProdutoAtivo[]>([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState<string | null>(null); // null = auto
   const [referencias, setReferencias] = useState<Referencia[]>([]);
+  const [refParaCriar, setRefParaCriar] = useState<Referencia | null>(null);
   const [loading, setLoading] = useState(true);
   const [gerando, setGerando] = useState(false);
 
@@ -827,9 +1021,16 @@ export default function ProducaoCriativos() {
         ) : tab === "biblioteca" ? (
           <Biblioteca vencedores={vencedores} />
         ) : (
-          <Referencias referencias={referencias} onToggle={onToggleRef} />
+          <Referencias referencias={referencias} onToggle={onToggleRef} onCriar={setRefParaCriar} />
         )}
       </div>
+
+      <FormularioReferencia
+        referencia={refParaCriar}
+        produtosAtivos={produtosAtivos}
+        onClose={() => setRefParaCriar(null)}
+        onGerado={carregar}
+      />
     </div>
   );
 }

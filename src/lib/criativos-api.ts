@@ -94,6 +94,14 @@ export async function atualizarStatus(id: string, status: Sugestao["status"]): P
   if (!r.ok) throw new Error(`status: ${r.status}`);
 }
 
+export type CampoTexto = {
+  id: string;
+  label: string;
+  descricao?: string;
+  placeholder?: string;
+  max_chars?: number;
+};
+
 export type Referencia = {
   id: string;
   nome_arquivo: string | null;
@@ -103,6 +111,7 @@ export type Referencia = {
   estilo_geral: string | null;
   mood: string | null;
   elementos_visuais: string | null; // JSON string[]
+  campos_texto: string | null; // JSON CampoTexto[]
   freepik_style_en: string | null;
   thumb_link: string | null;
   ativo: number;
@@ -122,4 +131,31 @@ export async function toggleReferencia(id: string, ativo: 0 | 1): Promise<void> 
     body: JSON.stringify({ id, ativo }),
   });
   if (!r.ok) throw new Error(`toggle ref: ${r.status}`);
+}
+
+export async function sugerirTextos(
+  referenciaId: string,
+  produto?: string,
+): Promise<{ produto: string; campos: Record<string, string> }> {
+  const r = await fetch(`${API_BASE}/api/sugerir-textos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ referencia_id: referenciaId, produto }),
+  });
+  if (!r.ok) throw new Error(`sugerir-textos: ${r.status} — ${await r.text()}`);
+  return r.json();
+}
+
+export async function gerarComReferencia(
+  referenciaId: string,
+  campos: Record<string, string>,
+  produto?: string,
+): Promise<{ ok: boolean; id: string; produto: string }> {
+  const r = await fetch(`${API_BASE}/api/gerar-com-referencia`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ referencia_id: referenciaId, produto, campos }),
+  });
+  if (!r.ok) throw new Error(`gerar-com-referencia: ${r.status} — ${await r.text()}`);
+  return r.json();
 }
