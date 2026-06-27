@@ -93,3 +93,33 @@ export async function atualizarStatus(id: string, status: Sugestao["status"]): P
   });
   if (!r.ok) throw new Error(`status: ${r.status}`);
 }
+
+export type Referencia = {
+  id: string;
+  nome_arquivo: string | null;
+  paleta_cores: string | null; // JSON string[]
+  composicao: string | null;
+  tipografia: string | null;
+  estilo_geral: string | null;
+  mood: string | null;
+  elementos_visuais: string | null; // JSON string[]
+  freepik_style_en: string | null;
+  thumb_link: string | null;
+  ativo: number;
+  analisado_em: string;
+};
+
+export async function fetchReferencias(): Promise<Referencia[]> {
+  const r = await fetch(`${API_BASE}/api/referencias`);
+  if (!r.ok) throw new Error(`referencias: ${r.status}`);
+  return r.json();
+}
+
+export async function toggleReferencia(id: string, ativo: 0 | 1): Promise<void> {
+  const r = await fetch(`${API_BASE}/api/referencias`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ativo }),
+  });
+  if (!r.ok) throw new Error(`toggle ref: ${r.status}`);
+}

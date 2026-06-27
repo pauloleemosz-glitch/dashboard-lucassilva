@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Image as ImageIcon, Video, Copy, Check, RefreshCw, BookOpen, Lightbulb, Loader2 } from "lucide-react";
+import { Sparkles, Image as ImageIcon, Video, Copy, Check, RefreshCw, BookOpen, Lightbulb, Loader2, Palette, FolderOpen, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/TopNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,19 +11,25 @@ import {
   fetchBiblioteca,
   fetchSugestoes,
   fetchProdutosAtivos,
+  fetchReferencias,
+  toggleReferencia,
   gerarSugestoes,
   atualizarStatus,
   type ProdutoAtivo,
+  type Referencia,
   type Sugestao,
   type Vencedor,
 } from "@/lib/criativos-api";
+
+const DRIVE_REFERENCIAS_URL =
+  "https://drive.google.com/drive/folders/1Ax9LEIaMy0MH8BRedQIegCEPQKx1Y6fr";
 
 const fmtBRL = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 const fmtInt = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR").format(n);
 
-type Tab = "sugestoes" | "biblioteca";
+type Tab = "sugestoes" | "biblioteca" | "referencias";
 type FiltroStatus = "todos" | "novo" | "aprovado" | "produzido";
 type FiltroFormato = "todos" | "imagem" | "video";
 
@@ -494,26 +500,181 @@ function Biblioteca({ vencedores }: { vencedores: Vencedor[] }) {
   );
 }
 
+function safeParseArr(s: string | null): string[] {
+  if (!s) return [];
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function corChip(c: string) {
+  // tenta usar a cor como background se for hex; senão só mostra o texto
+  const isHex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c.trim());
+  return (
+    <span
+      key={c}
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] border border-border/40"
+      title={c}
+    >
+      {isHex && (
+        <span
+          className="inline-block w-3 h-3 rounded-sm border border-white/20"
+          style={{ backgroundColor: c.trim() }}
+        />
+      )}
+      {c}
+    </span>
+  );
+}
+
+function Referencias({
+  referencias,
+  onToggle,
+}: {
+  referencias: Referencia[];
+  onToggle: (id: string, ativo: 0 | 1) => void;
+}) {
+  const ativas = referencias.filter((r) => r.ativo === 1).length;
+
+  return (
+    <div className="space-y-5">
+      <Card className="p-5 glass-card">
+        <div className="flex items-start gap-4 flex-wrap">
+          <Palette className="h-8 w-8 text-neon-magenta shrink-0 mt-1" />
+          <div className="flex-1 min-w-[260px]">
+            <h2 className="text-lg font-medium">Banco de Referências de Estilo</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Jogue imagens de criativos que você quer usar de molde na pasta do Google
+              Drive. O sistema analisa o <strong>estilo visual</strong> (paleta, composição,
+              tipografia, mood) e usa como referência ao gerar novos criativos.
+              As <strong>{ativas} referências ativas</strong> são injetadas no prompt do Freepik.
+            </p>
+          </div>
+          <a
+            href={DRIVE_REFERENCIAS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs uppercase tracking-wider bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/40 text-neon-cyan hover:border-fuchsia-300/70 transition-colors"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Abrir pasta no Drive
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </Card>
+
+      {referencias.length === 0 ? (
+        <Card className="p-12 text-center glass-card">
+          <Palette className="h-12 w-12 mx-auto mb-4 text-neon-magenta" />
+          <h2 className="text-lg font-medium mb-2">Nenhuma referência ainda</h2>
+          <p className="text-sm text-muted-foreground">
+            Adicione imagens na pasta do Drive e rode{" "}
+            <code className="text-neon-cyan">sincronizar_referencias.py</code> pra analisá-las.
+          </p>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {referencias.map((r) => {
+            const paleta = safeParseArr(r.paleta_cores);
+            const elementos = safeParseArr(r.elementos_visuais);
+            return (
+              <Card key={r.id} className={cn("p-4 glass-card", r.ativo !== 1 && "opacity-50")}>
+                <div className="flex gap-4">
+                  {r.thumb_link ? (
+                    <img
+                      src={r.thumb_link}
+                      alt={r.nome_arquivo || "ref"}
+                      className="w-24 h-24 object-cover rounded-lg border border-border/40 shrink-0"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-lg border border-border/40 bg-background/40 flex items-center justify-center shrink-0">
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-medium truncate">
+                        {r.estilo_geral || r.nome_arquivo || "Referência"}
+                      </h3>
+                      <button
+                        onClick={() => onToggle(r.id, r.ativo === 1 ? 0 : 1)}
+                        title={r.ativo === 1 ? "Desativar (não usar na geração)" : "Ativar"}
+                        className={cn(
+                          "px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border shrink-0 transition-colors",
+                          r.ativo === 1
+                            ? "bg-neon-cyan/15 text-neon-cyan border-neon-cyan/40"
+                            : "text-muted-foreground border-border/40 hover:text-foreground",
+                        )}
+                      >
+                        {r.ativo === 1 ? "Ativa" : "Inativa"}
+                      </button>
+                    </div>
+                    {r.mood && (
+                      <p className="text-xs text-neon-magenta mt-0.5">{r.mood}</p>
+                    )}
+                    {paleta.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">{paleta.map(corChip)}</div>
+                    )}
+                  </div>
+                </div>
+
+                {r.tipografia && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    <span className="uppercase tracking-wider text-[10px] text-foreground/60">Tipografia:</span>{" "}
+                    {r.tipografia}
+                  </p>
+                )}
+                {r.composicao && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="uppercase tracking-wider text-[10px] text-foreground/60">Composição:</span>{" "}
+                    {r.composicao}
+                  </p>
+                )}
+                {elementos.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {elementos.map((e) => (
+                      <Badge key={e} variant="outline" className="text-[10px]">
+                        {e}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProducaoCriativos() {
   const [tab, setTab] = useState<Tab>("sugestoes");
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
   const [vencedores, setVencedores] = useState<Vencedor[]>([]);
   const [produtosAtivos, setProdutosAtivos] = useState<ProdutoAtivo[]>([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState<string | null>(null); // null = auto
+  const [referencias, setReferencias] = useState<Referencia[]>([]);
   const [loading, setLoading] = useState(true);
   const [gerando, setGerando] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, v, p] = await Promise.all([
+      const [s, v, p, refs] = await Promise.all([
         fetchSugestoes(),
         fetchBiblioteca(),
         fetchProdutosAtivos(7).catch(() => [] as ProdutoAtivo[]),
+        fetchReferencias().catch(() => [] as Referencia[]),
       ]);
       setSugestoes(s);
       setVencedores(v);
       setProdutosAtivos(p);
+      setReferencias(refs);
     } catch (e) {
       toast.error(`Erro: ${e}`);
     } finally {
@@ -548,7 +709,18 @@ export default function ProducaoCriativos() {
     }
   };
 
+  const onToggleRef = async (id: string, ativo: 0 | 1) => {
+    setReferencias((prev) => prev.map((r) => (r.id === id ? { ...r, ativo } : r)));
+    try {
+      await toggleReferencia(id, ativo);
+    } catch (e) {
+      toast.error(`Falha ao atualizar referência: ${e}`);
+      await carregar();
+    }
+  };
+
   const novasCount = sugestoes.filter((s) => s.status === "novo").length;
+  const refsAtivas = referencias.filter((r) => r.ativo === 1).length;
 
   return (
     <div className="min-h-screen p-4 md:p-6 space-y-5 relative">
@@ -595,6 +767,18 @@ export default function ProducaoCriativos() {
             <BookOpen className="h-4 w-4" />
             Biblioteca ({vencedores.length})
           </button>
+          <button
+            onClick={() => setTab("referencias")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition-all flex items-center gap-2",
+              tab === "referencias"
+                ? "bg-primary/15 text-neon-cyan border border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
+                : "text-muted-foreground hover:text-foreground border border-transparent",
+            )}
+          >
+            <Palette className="h-4 w-4" />
+            Referências ({refsAtivas})
+          </button>
         </div>
 
         <Button
@@ -640,8 +824,10 @@ export default function ProducaoCriativos() {
             produtoSelecionado={produtoSelecionado}
             onSelecionarProduto={setProdutoSelecionado}
           />
-        ) : (
+        ) : tab === "biblioteca" ? (
           <Biblioteca vencedores={vencedores} />
+        ) : (
+          <Referencias referencias={referencias} onToggle={onToggleRef} />
         )}
       </div>
     </div>
