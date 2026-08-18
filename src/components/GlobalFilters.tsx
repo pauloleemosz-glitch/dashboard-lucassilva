@@ -1,6 +1,7 @@
+import { useMemo, useState } from "react";
 import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, RefreshCw, Check, ChevronDown } from "lucide-react";
+import { CalendarIcon, RefreshCw, Check, ChevronDown, ChevronRight, Minus } from "lucide-react";
 
 import { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,6 +36,50 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
     : cursosSelecionados.length === 1
       ? cursosSelecionados[0]
       : `${cursosSelecionados.length} cursos selecionados`;
+
+  // Campanhas de teste seguem a convenção "PRODUTO: [<curso> - Teste <dd/mm>]".
+  // Aqui elas viram uma sublista dentro do curso principal em vez de itens soltos.
+  const grupos = useMemo(() => {
+    const re = /^(.+?)\s*[-–—]\s*Teste\b\s*(.*)$/i;
+    const mapa = new Map<string, { base: string; baseDisponivel: boolean; testes: { valor: string; label: string }[] }>();
+    const garantir = (base: string) => {
+      let g = mapa.get(base);
+      if (!g) {
+        g = { base, baseDisponivel: false, testes: [] };
+        mapa.set(base, g);
+      }
+      return g;
+    };
+    for (const c of cursosDisponiveis) {
+      const m = c.match(re);
+      if (m) {
+        const sufixo = m[2].trim();
+        garantir(m[1].trim()).testes.push({ valor: c, label: sufixo ? `Teste ${sufixo}` : "Teste" });
+      } else {
+        garantir(c).baseDisponivel = true;
+      }
+    }
+    return Array.from(mapa.values())
+      .map((g) => ({ ...g, testes: [...g.testes].sort((a, b) => a.label.localeCompare(b.label, "pt-BR")) }))
+      .sort((a, b) => a.base.localeCompare(b.base, "pt-BR"));
+  }, [cursosDisponiveis]);
+
+  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
+
+  // Marcar o curso principal quando ele não existe no período liga/desliga todos os testes.
+  const toggleGrupo = (g: (typeof grupos)[number]) => {
+    if (g.baseDisponivel) {
+      toggleCurso(g.base);
+      return;
+    }
+    const valores = g.testes.map((t) => t.valor);
+    const todos = valores.every((v) => cursosSelecionados.includes(v));
+    setCursos(
+      todos
+        ? cursosSelecionados.filter((c) => !valores.includes(c))
+        : [...cursosSelecionados, ...valores.filter((v) => !cursosSelecionados.includes(v))],
+    );
+  };
 
   const today = maxDate ? endOfDay(maxDate) : endOfDay(new Date());
   const todayStart = maxDate ? startOfDay(maxDate) : startOfDay(new Date());
@@ -152,22 +197,69 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
             Todos os cursos
           </button>
           <div className="max-h-[280px] overflow-y-auto">
-            {cursosDisponiveis.map((c) => {
-              const checked = cursosSelecionados.includes(c);
+            {grupos.map((g) => {
+              const testesMarcados = g.testes.filter((t) => cursosSelecionados.includes(t.valor)).length;
+              const baseMarcada = g.baseDisponivel
+                ? cursosSelecionados.includes(g.base)
+                : testesMarcados === g.testes.length && g.testes.length > 0;
+              const parcial = !baseMarcada && testesMarcados > 0;
+              const aberto = expandidos[g.base] ?? testesMarcados > 0;
+
               return (
-                <button
-                  key={c}
-                  onClick={() => toggleCurso(c)}
-                  className="w-full text-left text-xs px-2 py-2 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
-                >
-                  <span className={cn(
-                    "w-4 h-4 inline-flex items-center justify-center rounded border",
-                    checked ? "border-neon-cyan bg-primary/20" : "border-primary/30",
-                  )}>
-                    {checked && <Check className="h-3 w-3 text-neon-cyan" />}
-                  </span>
-                  <span className="truncate">{c}</span>
-                </button>
+                <div key={g.base}>
+                  <div className="w-full flex items-center rounded hover:bg-primary/10 transition-colors">
+                    {g.testes.length > 0 ? (
+                      <button
+                        onClick={() => setExpandidos((e) => ({ ...e, [g.base]: !aberto }))}
+                        aria-label={aberto ? `Recolher testes de ${g.base}` : `Expandir testes de ${g.base}`}
+                        aria-expanded={aberto}
+                        className="shrink-0 p-1 rounded text-muted-foreground hover:text-neon-cyan transition-colors"
+                      >
+                        {aberto ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    ) : (
+                      <span className="shrink-0 w-[22px]" />
+                    )}
+                    <button
+                      onClick={() => toggleGrupo(g)}
+                      className="flex-1 min-w-0 text-left text-xs pr-2 py-2 hover:text-neon-cyan transition-colors flex items-center gap-2"
+                    >
+                      <span className={cn(
+                        "w-4 h-4 shrink-0 inline-flex items-center justify-center rounded border",
+                        baseMarcada || parcial ? "border-neon-cyan bg-primary/20" : "border-primary/30",
+                      )}>
+                        {baseMarcada && <Check className="h-3 w-3 text-neon-cyan" />}
+                        {parcial && <Minus className="h-3 w-3 text-neon-cyan" />}
+                      </span>
+                      <span className="truncate">{g.base}</span>
+                      {g.testes.length > 0 && (
+                        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                          {testesMarcados > 0 ? `${testesMarcados}/${g.testes.length}` : g.testes.length}
+                          {" "}{g.testes.length === 1 ? "teste" : "testes"}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {aberto && g.testes.map((t) => {
+                    const checked = cursosSelecionados.includes(t.valor);
+                    return (
+                      <button
+                        key={t.valor}
+                        onClick={() => toggleCurso(t.valor)}
+                        className="w-full text-left text-xs pl-8 pr-2 py-1.5 rounded hover:bg-primary/10 hover:text-neon-cyan transition-colors flex items-center gap-2"
+                      >
+                        <span className={cn(
+                          "w-4 h-4 shrink-0 inline-flex items-center justify-center rounded border",
+                          checked ? "border-neon-cyan bg-primary/20" : "border-primary/30",
+                        )}>
+                          {checked && <Check className="h-3 w-3 text-neon-cyan" />}
+                        </span>
+                        <span className="truncate text-muted-foreground">{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>
