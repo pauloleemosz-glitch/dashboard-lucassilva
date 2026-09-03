@@ -366,6 +366,9 @@ function Dashboard() {
           {plataforma === "meta" && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
+            {modo !== "lead" && (
+              <KPICard label="Faturamento" value={agg.valorCompra} variation={variacaoPct(agg.valorCompra, prevAgg.valorCompra)} icon={TrendingUp} color="gold" format={(v) => formatBRL(v)} delay={0.03} />
+            )}
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
             <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />
             {modo === "lead" ? (
