@@ -66,18 +66,18 @@ export function GlobalFilters({ cursos: cursosDisponiveis, angulos = [], mecanis
 
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
 
-  // Marcar o curso principal quando ele não existe no período liga/desliga todos os testes.
+  // Marcar o curso principal liga/desliga o curso E todos os testes dele de uma vez
+  // (Paulo, 03/09). Os testes continuam podendo ser marcados um a um na sublista.
+  // Quando o curso principal não existe no período, o grupo é só os testes.
   const toggleGrupo = (g: (typeof grupos)[number]) => {
-    if (g.baseDisponivel) {
-      toggleCurso(g.base);
-      return;
-    }
-    const valores = g.testes.map((t) => t.valor);
-    const todos = valores.every((v) => cursosSelecionados.includes(v));
+    const valores = g.baseDisponivel ? [g.base, ...g.testes.map((t) => t.valor)] : g.testes.map((t) => t.valor);
+    const ligar = g.baseDisponivel
+      ? !cursosSelecionados.includes(g.base)
+      : !valores.every((v) => cursosSelecionados.includes(v));
     setCursos(
-      todos
-        ? cursosSelecionados.filter((c) => !valores.includes(c))
-        : [...cursosSelecionados, ...valores.filter((v) => !cursosSelecionados.includes(v))],
+      ligar
+        ? [...cursosSelecionados, ...valores.filter((v) => !cursosSelecionados.includes(v))]
+        : cursosSelecionados.filter((c) => !valores.includes(c)),
     );
   };
 
