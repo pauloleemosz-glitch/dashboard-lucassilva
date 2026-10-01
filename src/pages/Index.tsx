@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap, Landmark } from "lucide-react";
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE } from "@/utils/atribuicao";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
+import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
 import { KPICard } from "@/components/KPICard";
@@ -51,6 +52,7 @@ function Dashboard() {
   const { data, isLoading, isFetching, refetch, dataUpdatedAt, error } = useSheetData();
   const { data: googleData, isLoading: googleLoading, isFetching: googleFetching, refetch: googleRefetch } = useGoogleAdsData();
   const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, plataforma, angulosSel, mecanismosSel } = useFilters();
+  const { data: fatRealData } = useFaturamentoReal();
 
   const showMeta = plataforma !== "google";
   const showGoogle = plataforma !== "meta";
@@ -198,6 +200,46 @@ function Dashboard() {
   const notaVendaCurso =
     `${formatNumber(agg.vendaCurso, 0)} venda(s) do próprio curso da campanha (sozinho ou em combo)` +
     `${vendaCursoParcial ? " · conta só desde 20/09" : ""}. ${AVISO_META_7D_CURTO}`;
+
+  // Faturamento REAL (Looker, vendas pagas de todas as origens). O filtro de curso do painel usa os
+  // rótulos das campanhas; aqui eles viram grupos (turmas de MBA, Vitalício + Pro etc. somados).
+  const fatReal = useMemo(() => {
+    const rows = fatRealData ?? [];
+    let ate: Date | null = null;
+    for (const r of rows) if (r.date && (!ate || r.date > ate)) ate = r.date;
+    const grupos = cursosSelecionados.length
+      ? new Set(cursosSelecionados.map(grupoDoRotulo).filter((g): g is string => !!g))
+      : null;
+    const soma = (de?: Date, a?: Date) =>
+      rows.reduce((t, r) => {
+        if (!r.date || (de && r.date < de) || (a && r.date > a)) return t;
+        if (grupos && !grupos.has(r.grupo)) return t;
+        return t + r.receita;
+      }, 0);
+    const valor = soma(dateRange?.from, dateRange?.to);
+    let anterior: number | null = null;
+    if (dateRange?.from && dateRange?.to) {
+      const span = dateRange.to.getTime() - dateRange.from.getTime();
+      const prevTo = new Date(dateRange.from.getTime() - 1);
+      const prevFrom = new Date(prevTo.getTime() - span);
+      const temDados = rows.some((r) => r.date && r.date <= prevFrom);
+      anterior = temDados ? soma(prevFrom, prevTo) : null;
+    }
+    return { valor, anterior, ate, grupos: grupos ? [...grupos] : null, vazio: rows.length === 0 };
+  }, [fatRealData, cursosSelecionados, dateRange]);
+  const notaFatReal = fatReal.vazio
+    ? "Ainda sem extração do Looker."
+    : [
+        "Vendas pagas, todas as origens (Meta, Google, orgânico) — Looker, não é atribuição.",
+        fatReal.grupos
+          ? fatReal.grupos.length
+            ? `Cursos: ${fatReal.grupos.join(", ")}.`
+            : "Filtro sem curso correspondente no Looker."
+          : null,
+        fatReal.ate && dateRange?.to && dateRange.to > fatReal.ate ? `Extraído até ${format(fatReal.ate, "dd/MM")}.` : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
   const ctrCurrent = ctr(agg.clicks, agg.impressions);
   const ctrPrev = ctr(prevAgg.clicks, prevAgg.impressions);
@@ -370,7 +412,12 @@ function Dashboard() {
         <>
           {/* KPIs */}
           {plataforma === "combinado" && (
-            <CombinedKpis meta={agg} metaPrev={prevAgg} google={gAgg} googlePrev={gPrevAgg} />
+            <CombinedKpis meta={agg} metaPrev={prevAgg} google={gAgg} googlePrev={gPrevAgg}>
+              {modo !== "lead" && (
+                <KPICard label="Faturamento real (vendas)" value={fatReal.valor} variation={fatReal.anterior !== null ? variacaoPct(fatReal.valor, fatReal.anterior) : null} icon={Landmark} color="gold" format={(v) => formatBRL(v)} delay={0.4}
+                  nota={notaFatReal} />
+              )}
+            </CombinedKpis>
           )}
           {plataforma === "google" && <GoogleKpis agg={gAgg} prev={gPrevAgg} />}
           {plataforma === "meta" && (
@@ -383,6 +430,10 @@ function Dashboard() {
             {modo !== "lead" && (
               <KPICard label="Venda do curso (Meta)" value={agg.valorVendaCurso} variation={null} icon={GraduationCap} color="gold" format={(v) => formatBRL(v)} delay={0.04}
                 nota={notaVendaCurso} />
+            )}
+            {modo !== "lead" && (
+              <KPICard label="Faturamento real (vendas)" value={fatReal.valor} variation={fatReal.anterior !== null ? variacaoPct(fatReal.valor, fatReal.anterior) : null} icon={Landmark} color="gold" format={(v) => formatBRL(v)} delay={0.045}
+                nota={notaFatReal} />
             )}
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
             <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />

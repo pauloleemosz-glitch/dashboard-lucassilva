@@ -55,11 +55,13 @@ export function CombinedKpis({
   metaPrev,
   google,
   googlePrev,
+  children,
 }: {
   meta: MetaMini;
   metaPrev: MetaMini;
   google: GoogleAgg;
   googlePrev: GoogleAgg;
+  children?: React.ReactNode;
 }) {
   const spend = meta.spend + google.spend;
   const spendPrev = metaPrev.spend + googlePrev.spend;
@@ -86,6 +88,7 @@ export function CombinedKpis({
       <KPICard label="Invest. Google" value={google.spend} variation={variacaoPct(google.spend, googlePrev.spend)} icon={Zap} color="gold" format={(v) => formatBRL(v)} delay={0.25} />
       <KPICard label="CTR Total" value={ctrCur} variation={variacaoPct(ctrCur, ctrPrev)} icon={Percent} color="gold" format={(v) => formatPct(v)} delay={0.3} />
       <KPICard label="CPC Total" value={cpcCur} variation={variacaoPct(cpcCur, cpcPrev)} icon={MousePointer} color="purple" format={(v) => formatBRL(v)} delay={0.35} />
+      {children}
     </div>
   );
 }
