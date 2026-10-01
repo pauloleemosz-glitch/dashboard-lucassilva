@@ -5,6 +5,7 @@ import { AdRow } from "@/hooks/useSheetData";
 import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn, cpaPerpetuo, cpaLancamento } from "@/utils/metrics";
 import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
+import { AVISO_META_7D } from "@/utils/atribuicao";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 const ANGULO_COLORS: Record<string, string> = {
@@ -185,6 +186,9 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
           </span>
           <span className="text-xs text-muted-foreground">{sorted.length} anúncios</span>
         </div>
+        <p className="basis-full text-[10px] leading-snug text-muted-foreground/80">
+          Compras, valor de conversão e custo por compra: {AVISO_META_7D}
+        </p>
       </div>
 
       <div className="relative">

@@ -55,18 +55,20 @@ export function AnguloMecanismoPie({
   data,
   mode = "vendas",
   delay = 0,
+  nota,
 }: {
   title: string;
   data: Slice[];
   mode?: "vendas" | "leads";
   delay?: number;
+  nota?: string;
 }) {
   const filtered = data.filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   const total = filtered.reduce((acc, d) => acc + d.value, 0);
   const isLeads = mode === "leads";
 
   return (
-    <ChartCard title={title} delay={delay}>
+    <ChartCard title={title} delay={delay} nota={nota}>
       {filtered.length === 0 ? (
         <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
           Sem dados no período

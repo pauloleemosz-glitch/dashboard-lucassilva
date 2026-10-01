@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap } from "lucide-react";
+import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE } from "@/utils/atribuicao";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
 import { GlobalFilters } from "@/components/GlobalFilters";
@@ -38,9 +39,11 @@ function aggregate(rows: AdRow[]) {
       acc.valorCompra += r.valorCompra;
       acc.valorCheckout += r.valorCheckout;
       acc.initiateCheckout += r.initiateCheckout;
+      acc.vendaCurso += r.vendaCurso;
+      acc.valorVendaCurso += r.valorVendaCurso;
       return acc;
     },
-    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0 },
+    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0, vendaCurso: 0, valorVendaCurso: 0 },
   );
 }
 
@@ -188,6 +191,13 @@ function Dashboard() {
 
   const cpaCurrent = modo === "lead" ? cpaLancamento(agg.spend, agg.leads) : cpaPerpetuo(agg.spend, agg.compras);
   const cpaPrev = modo === "lead" ? cpaLancamento(prevAgg.spend, prevAgg.leads) : cpaPerpetuo(prevAgg.spend, prevAgg.compras);
+
+  // Venda do curso (conversão por SKU) só existe desde 20/09/2026. Período que começa antes não muda a
+  // soma (os dias anteriores vêm vazios), mas o card avisa. Sem variação: o período anterior cai antes de 20/09.
+  const vendaCursoParcial = !!dateRange?.from && dateRange.from < VENDA_CURSO_DESDE;
+  const notaVendaCurso =
+    `${formatNumber(agg.vendaCurso, 0)} venda(s) do próprio curso da campanha (sozinho ou em combo)` +
+    `${vendaCursoParcial ? " · conta só desde 20/09" : ""}. ${AVISO_META_7D_CURTO}`;
 
   const ctrCurrent = ctr(agg.clicks, agg.impressions);
   const ctrPrev = ctr(prevAgg.clicks, prevAgg.impressions);
@@ -367,7 +377,12 @@ function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
             {modo !== "lead" && (
-              <KPICard label="Faturamento" value={agg.valorCompra} variation={variacaoPct(agg.valorCompra, prevAgg.valorCompra)} icon={TrendingUp} color="gold" format={(v) => formatBRL(v)} delay={0.03} />
+              <KPICard label="Faturamento" value={agg.valorCompra} variation={variacaoPct(agg.valorCompra, prevAgg.valorCompra)} icon={TrendingUp} color="gold" format={(v) => formatBRL(v)} delay={0.03}
+                nota={`Toda compra, de qualquer curso. ${AVISO_META_7D_CURTO}`} />
+            )}
+            {modo !== "lead" && (
+              <KPICard label="Venda do curso (Meta)" value={agg.valorVendaCurso} variation={null} icon={GraduationCap} color="gold" format={(v) => formatBRL(v)} delay={0.04}
+                nota={notaVendaCurso} />
             )}
             <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
             <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />
@@ -375,11 +390,11 @@ function Dashboard() {
               <KPICard label="Leads" value={agg.leads} variation={variacaoPct(agg.leads, prevAgg.leads)} icon={UserPlus} color="orange" delay={0.15} />
             ) : modo === "geral" ? (
               <>
-                <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
+                <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} nota={AVISO_META_7D_CURTO} />
                 <KPICard label="Leads" value={agg.leads} variation={variacaoPct(agg.leads, prevAgg.leads)} icon={UserPlus} color="gold" delay={0.18} />
               </>
             ) : (
-              <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} />
+              <KPICard label="Vendas" value={agg.compras} variation={variacaoPct(agg.compras, prevAgg.compras)} icon={ShoppingCart} color="orange" delay={0.15} nota={AVISO_META_7D_CURTO} />
             )}
             <KPICard label="CPC" value={cpcCurrent} variation={variacaoPct(cpcCurrent, cpcPrev)} icon={MousePointer} color="purple" format={(v) => formatBRL(v)} delay={0.2} />
             <KPICard label="CPM" value={cpmCurrent} variation={variacaoPct(cpmCurrent, cpmPrev)} icon={BarChart3} color="cyan" format={(v) => formatBRL(v)} delay={0.25} />
@@ -392,6 +407,7 @@ function Dashboard() {
               color="orange"
               format={(v) => formatBRL(v)}
               delay={0.35}
+              nota={modo === "lead" ? undefined : AVISO_META_7D_CURTO}
             />
           </div>
           )}
@@ -548,7 +564,7 @@ function Dashboard() {
           {/* Product share pies */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Reveal direction="left">
-              <ProductSharePie title="Participação dos Produtos · Vendas" data={salesShare} />
+              <ProductSharePie title="Participação dos Produtos · Vendas" data={salesShare} nota={AVISO_META_7D_CURTO} />
             </Reveal>
             <Reveal direction="right" delay={0.1}>
               <ProductSharePie title="Participação dos Produtos · Leads" data={leadsShare} delay={0.05} />
@@ -558,7 +574,7 @@ function Dashboard() {
           {/* Ângulo share pies */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Reveal direction="left">
-              <AnguloMecanismoPie title="Ângulo · Vendas" data={anguloSalesShare} mode="vendas" />
+              <AnguloMecanismoPie title="Ângulo · Vendas" data={anguloSalesShare} mode="vendas" nota={AVISO_META_7D_CURTO} />
             </Reveal>
             <Reveal direction="right" delay={0.1}>
               <AnguloMecanismoPie title="Ângulo · Leads" data={anguloLeadsShare} mode="leads" delay={0.05} />
@@ -568,7 +584,7 @@ function Dashboard() {
           {/* Mecanismo share pies */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Reveal direction="left">
-              <AnguloMecanismoPie title="Mecanismo · Vendas" data={mecanismoSalesShare} mode="vendas" />
+              <AnguloMecanismoPie title="Mecanismo · Vendas" data={mecanismoSalesShare} mode="vendas" nota={AVISO_META_7D_CURTO} />
             </Reveal>
             <Reveal direction="right" delay={0.1}>
               <AnguloMecanismoPie title="Mecanismo · Leads" data={mecanismoLeadsShare} mode="leads" delay={0.05} />

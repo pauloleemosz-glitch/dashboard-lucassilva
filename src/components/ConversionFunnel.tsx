@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { formatBRL, formatNumber, formatPct } from "@/utils/parsers";
 import { taxaConversao } from "@/utils/metrics";
+import { AVISO_META_7D } from "@/utils/atribuicao";
 
 interface Props {
   cliques: number;
@@ -157,6 +158,9 @@ export function ConversionFunnel({
           );
         })}
       </motion.div>
+      <p className="mt-4 text-[10px] leading-snug text-muted-foreground/80 relative">
+        Compra e valor de compra: {AVISO_META_7D}
+      </p>
     </div>
   );
 }

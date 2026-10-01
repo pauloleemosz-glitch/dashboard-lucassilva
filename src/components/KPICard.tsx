@@ -11,6 +11,8 @@ interface Props {
   color?: "cyan" | "purple" | "orange" | "gold";
   format?: (n: number) => string;
   delay?: number;
+  /** Nota curta embaixo do card (ex.: aviso da janela de atribuição da Meta). */
+  nota?: string;
 }
 
 const colorMap = {
@@ -26,7 +28,7 @@ const glowMap = {
   gold: "hsl(var(--neon-gold))",
 };
 
-export function KPICard({ label, value, variation, icon: Icon, color = "cyan", format, delay = 0 }: Props) {
+export function KPICard({ label, value, variation, icon: Icon, color = "cyan", format, delay = 0, nota }: Props) {
   const reduced = useReducedMotion();
 
   const mv = useMotionValue(0);
@@ -89,6 +91,7 @@ export function KPICard({ label, value, variation, icon: Icon, color = "cyan", f
         <span>{variationDisplay.text}</span>
         <span className="text-muted-foreground ml-1 truncate">vs período anterior</span>
       </div>
+      {nota && <p className="mt-2 text-[10px] leading-snug text-muted-foreground/80 relative">{nota}</p>}
     </motion.div>
   );
 }

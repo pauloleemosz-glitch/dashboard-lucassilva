@@ -1,6 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartCard, NeonTooltip } from "./ChartCard";
 import { formatBRL, formatNumber } from "@/utils/parsers";
+import { AVISO_META_7D } from "@/utils/atribuicao";
 
 interface Point {
   date: string;
@@ -11,7 +12,7 @@ interface Point {
 
 export function SpendPurchasesCPA({ data }: { data: Point[] }) {
   return (
-    <ChartCard title="Gastos, Compras e CPA ao longo do tempo" delay={0.3}>
+    <ChartCard title="Gastos, Compras e CPA ao longo do tempo" delay={0.3} nota={`Compras e CPA: ${AVISO_META_7D}`}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid stroke="hsl(var(--neon-cyan))" strokeOpacity={0.1} vertical={false} />

@@ -4,10 +4,12 @@ import { ReactNode } from "react";
 interface Props {
   title: string;
   delay?: number;
+  /** Nota curta embaixo do título (ex.: aviso da janela de atribuição da Meta). */
+  nota?: string;
   children: ReactNode;
 }
 
-export function ChartCard({ title, delay = 0, children }: Props) {
+export function ChartCard({ title, delay = 0, nota, children }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -15,7 +17,8 @@ export function ChartCard({ title, delay = 0, children }: Props) {
       transition={{ duration: 0.6, delay, ease: "easeOut" }}
       className="glass-card rounded-xl p-5"
     >
-      <h3 className="text-sm uppercase tracking-widest text-muted-foreground mb-4">{title}</h3>
+      <h3 className={`text-sm uppercase tracking-widest text-muted-foreground ${nota ? "mb-1" : "mb-4"}`}>{title}</h3>
+      {nota && <p className="text-[10px] leading-snug text-muted-foreground/80 mb-4">{nota}</p>}
       <div className="h-[280px] w-full">{children}</div>
     </motion.div>
   );

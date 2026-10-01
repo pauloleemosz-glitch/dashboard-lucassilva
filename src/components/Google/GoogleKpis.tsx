@@ -80,7 +80,8 @@ export function CombinedKpis({
       <KPICard label="Investimento Total" value={spend} variation={variacaoPct(spend, spendPrev)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
       <KPICard label="Impressões Total" value={impr} variation={variacaoPct(impr, imprPrev)} icon={Eye} color="purple" delay={0.05} />
       <KPICard label="Cliques Total" value={clk} variation={variacaoPct(clk, clkPrev)} icon={MousePointer} color="cyan" delay={0.1} />
-      <KPICard label="Conversões + Vendas" value={conv} variation={variacaoPct(conv, convPrev)} icon={ShoppingCart} color="orange" format={(v) => formatNumber(v, 0)} delay={0.15} />
+      <KPICard label="Conversões + Vendas" value={conv} variation={variacaoPct(conv, convPrev)} icon={ShoppingCart} color="orange" format={(v) => formatNumber(v, 0)} delay={0.15}
+        nota="Vendas da Meta: só compra até 7 dias após o clique; depois disso não entra." />
       <KPICard label="Invest. Meta" value={meta.spend} variation={variacaoPct(meta.spend, metaPrev.spend)} icon={DollarSign} color="gold" format={(v) => formatBRL(v)} delay={0.2} />
       <KPICard label="Invest. Google" value={google.spend} variation={variacaoPct(google.spend, googlePrev.spend)} icon={Zap} color="gold" format={(v) => formatBRL(v)} delay={0.25} />
       <KPICard label="CTR Total" value={ctrCur} variation={variacaoPct(ctrCur, ctrPrev)} icon={Percent} color="gold" format={(v) => formatPct(v)} delay={0.3} />

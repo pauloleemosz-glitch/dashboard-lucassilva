@@ -28,6 +28,9 @@ export interface AdRow {
   landingPageViews: number;
   compraLP: number;
   valorCompraLP: number;
+  /** Venda do PRÓPRIO curso da campanha (conversão por SKU), Meta 7d clique — só existe desde 20/09/2026. */
+  vendaCurso: number;
+  valorVendaCurso: number;
   curso: string;
   angulo?: string;
   mecanismo?: string;
@@ -103,6 +106,8 @@ async function fetchSheet(): Promise<AdRow[]> {
         landingPageViews: num("Visualizações da página de destino"),
         compraLP: num("Compra LP1108 - v3"),
         valorCompraLP: num("Valor de conversão de Compra LP1108 - v3"),
+        vendaCurso: num("Venda do curso - Meta 7d clique (qtd)"),
+        valorVendaCurso: num("Valor da venda do curso - Meta 7d clique"),
         curso: r["Curso / Produto"] || "Sem categoria",
         angulo: analysis?.angulo || "",
         mecanismo: analysis?.mecanismo || "",

@@ -48,16 +48,18 @@ export function ProductSharePie({
   title,
   data,
   delay = 0,
+  nota,
 }: {
   title: string;
   data: Slice[];
   delay?: number;
+  nota?: string;
 }) {
   const filtered = data.filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   const total = filtered.reduce((acc, d) => acc + d.value, 0);
 
   return (
-    <ChartCard title={title} delay={delay}>
+    <ChartCard title={title} delay={delay} nota={nota}>
       {filtered.length === 0 ? (
         <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
           Sem dados no período
