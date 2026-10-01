@@ -31,6 +31,12 @@ export interface AdRow {
   /** Venda do PRÓPRIO curso da campanha (conversão por SKU), Meta 7d clique — só existe desde 20/09/2026. */
   vendaCurso: number;
   valorVendaCurso: number;
+  /** Rolagem da página de vendas do curso (CPA, C-PRO R, C-PRO I, CFP®), Meta — só existe desde 01/10/2026. */
+  scroll25: number;
+  scroll50: number;
+  scroll75: number;
+  scroll90: number;
+  viuBotao: number;
   curso: string;
   angulo?: string;
   mecanismo?: string;
@@ -108,6 +114,11 @@ async function fetchSheet(): Promise<AdRow[]> {
         valorCompraLP: num("Valor de conversão de Compra LP1108 - v3"),
         vendaCurso: num("Venda do curso - Meta 7d clique (qtd)"),
         valorVendaCurso: num("Valor da venda do curso - Meta 7d clique"),
+        scroll25: num("Rolagem 25% - página do curso"),
+        scroll50: num("Rolagem 50% - página do curso"),
+        scroll75: num("Rolagem 75% - página do curso"),
+        scroll90: num("Rolagem 90% - página do curso"),
+        viuBotao: num("Viu o botão de compra - página do curso"),
         curso: r["Curso / Produto"] || "Sem categoria",
         angulo: analysis?.angulo || "",
         mecanismo: analysis?.mecanismo || "",

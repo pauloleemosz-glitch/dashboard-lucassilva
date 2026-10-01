@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap, Landmark } from "lucide-react";
-import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE } from "@/utils/atribuicao";
+import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
+import { ScrollDepth } from "@/components/ScrollDepth";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
@@ -240,6 +241,31 @@ function Dashboard() {
       ]
         .filter(Boolean)
         .join(" ");
+
+  // Rolagem da página de vendas: só linhas das campanhas dos 4 cursos com página medida e só desde 01/10
+  // (antes disso a página não tinha a tag — a base de visitas sem rolagem derrubaria as taxas).
+  const rolagem = useMemo(() => {
+    const vazio = () => ({ visitas: 0, scroll25: 0, scroll50: 0, scroll75: 0, scroll90: 0, viuBotao: 0, checkout: 0 });
+    const total = vazio();
+    const por = new Map<string, ReturnType<typeof vazio>>();
+    for (const r of filtered) {
+      const c = cursoRolagem(r.curso);
+      if (!c || !r.date || r.date < ROLAGEM_DESDE) continue;
+      const e = por.get(c) || vazio();
+      for (const t of [total, e]) {
+        t.visitas += r.landingPageViews;
+        t.scroll25 += r.scroll25;
+        t.scroll50 += r.scroll50;
+        t.scroll75 += r.scroll75;
+        t.scroll90 += r.scroll90;
+        t.viuBotao += r.viuBotao;
+        t.checkout += r.initiateCheckout;
+      }
+      por.set(c, e);
+    }
+    const porProduto = [...por.entries()].map(([nome, v]) => ({ nome, ...v })).sort((a, b) => b.visitas - a.visitas);
+    return { ...total, porProduto, titulo: porProduto.length === 1 ? porProduto[0].nome : "" };
+  }, [filtered]);
 
   const ctrCurrent = ctr(agg.clicks, agg.impressions);
   const ctrPrev = ctr(prevAgg.clicks, prevAgg.impressions);
@@ -611,6 +637,12 @@ function Dashboard() {
               </Reveal>
             </div>
           </div>
+
+          {modo !== "lead" && (
+            <Reveal direction="up">
+              <ScrollDepth {...rolagem} />
+            </Reveal>
+          )}
 
           {/* Product share pies */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
