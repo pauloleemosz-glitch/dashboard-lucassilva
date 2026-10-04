@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import AnunciosConcorrentes from "./pages/AnunciosConcorrentes.tsx";
 import CampanhasConcorrentes from "./pages/CampanhasConcorrentes.tsx";
 import ProducaoCriativos from "./pages/ProducaoCriativos.tsx";
+import PalavrasBuscas from "./pages/PalavrasBuscas.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/anuncios-concorrentes" element={<AnunciosConcorrentes />} />
           <Route path="/campanhas-concorrentes" element={<CampanhasConcorrentes />} />
           <Route path="/producao-criativos" element={<ProducaoCriativos />} />
+          <Route path="/palavras-buscas" element={<PalavrasBuscas />} />
           {/* Redirect legacy route */}
           <Route path="/concorrentes" element={<AnunciosConcorrentes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

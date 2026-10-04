@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, Eye, Megaphone, Sparkles } from "lucide-react";
+import { BarChart3, Eye, Megaphone, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TopNav() {
@@ -7,6 +7,7 @@ export function TopNav() {
     { to: "/", label: "Dashboard", icon: BarChart3 },
     { to: "/anuncios-concorrentes", label: "Anúncios Concorrentes", icon: Eye },
     { to: "/campanhas-concorrentes", label: "Campanhas Concorrentes", icon: Megaphone },
+    { to: "/palavras-buscas", label: "Palavras e Buscas", icon: Search },
   ];
 
   return (

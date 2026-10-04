@@ -54,10 +54,40 @@ export interface GoogleSearchTermRow {
   curso: string;
 }
 
+// Conversões por TIPO (abas "Google Conv Termos" / "Google Conv Palavras", 04/10/2026).
+// Usa all_conversions: conta toda ação de conversão, inclusive as que não entram
+// na meta da campanha — é o que separa a venda real da visita de página.
+export type TipoConversao = "compra" | "checkout" | "visita" | "cadastro" | "outro";
+
+export interface GoogleConvRow {
+  date: Date | null;
+  campaign: string;
+  adGroup: string;
+  term: string; // termo de busca (aba de termos) ou palavra-chave (aba de palavras)
+  matchType: string;
+  category: string;
+  tipo: TipoConversao;
+  action: string;
+  conversions: number;
+  value: number;
+  curso: string;
+}
+
 export interface GoogleData {
   ads: GoogleAdRow[];
   keywords: GoogleKeywordRow[];
   searchTerms: GoogleSearchTermRow[];
+  convTerms: GoogleConvRow[];
+  convKeywords: GoogleConvRow[];
+}
+
+export function tipoConversao(category: string): TipoConversao {
+  const c = (category || "").toUpperCase();
+  if (c === "PURCHASE") return "compra";
+  if (c === "BEGIN_CHECKOUT" || c === "ADD_TO_CART") return "checkout";
+  if (c === "PAGE_VIEW") return "visita";
+  if (["SIGNUP", "SUBMIT_LEAD_FORM", "LEAD", "QUALIFIED_LEAD", "CONTACT"].includes(c)) return "cadastro";
+  return "outro";
 }
 
 // Os números vêm em formato US (ponto decimal, sem separador de milhar).
@@ -90,11 +120,44 @@ async function fetchTab(tab: string): Promise<Record<string, string>[]> {
   return Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true }).data;
 }
 
+// Aba que ainda não existe: o gviz devolve a PRIMEIRA aba no lugar. Por isso
+// a leitura confere o cabeçalho e devolve vazio se não for a aba certa.
+async function fetchConvTab(tab: string, termCol: string): Promise<GoogleConvRow[]> {
+  let raw: Record<string, string>[] = [];
+  try {
+    raw = await fetchTab(tab);
+  } catch {
+    return [];
+  }
+  if (!raw.length || !("Conversion Category" in raw[0])) return [];
+  return raw
+    .map((r) => {
+      const campaign = r["Campaign Name"] || "";
+      const category = r["Conversion Category"] || "";
+      return {
+        date: parseDate(r["Date"]),
+        campaign,
+        adGroup: r["Ad Group"] || "",
+        term: r[termCol] || "",
+        matchType: r["Match Type"] || "",
+        category,
+        tipo: tipoConversao(category),
+        action: r["Conversion Action"] || "",
+        conversions: gnum(r["All Conversions"]),
+        value: gnum(r["All Conv Value"]),
+        curso: cursoFromCampaign(campaign),
+      };
+    })
+    .filter((r) => r.term);
+}
+
 async function fetchGoogle(): Promise<GoogleData> {
-  const [adsRaw, kwRaw, stRaw] = await Promise.all([
+  const [adsRaw, kwRaw, stRaw, convTerms, convKeywords] = await Promise.all([
     fetchTab("Google Ads"),
     fetchTab("Google Keywords"),
     fetchTab("Google Search Terms"),
+    fetchConvTab("Google Conv Termos", "Search Term"),
+    fetchConvTab("Google Conv Palavras", "Keyword"),
   ]);
 
   const ads: GoogleAdRow[] = adsRaw
@@ -159,7 +222,7 @@ async function fetchGoogle(): Promise<GoogleData> {
     })
     .filter((r) => r.term);
 
-  return { ads, keywords, searchTerms };
+  return { ads, keywords, searchTerms, convTerms, convKeywords };
 }
 
 export function useGoogleAdsData() {
