@@ -41,12 +41,21 @@ function aggregate(rows: AdRow[]) {
       acc.valorCompra += r.valorCompra;
       acc.valorCheckout += r.valorCheckout;
       acc.initiateCheckout += r.initiateCheckout;
+      acc.cliqueBotao += r.cliqueBotao || 0;
+      acc.chegouCheckout += r.chegouCheckout || 0;
       acc.vendaCurso += r.vendaCurso;
       acc.valorVendaCurso += r.valorVendaCurso;
       return acc;
     },
-    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0, vendaCurso: 0, valorVendaCurso: 0 },
+    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0, cliqueBotao: 0, chegouCheckout: 0, vendaCurso: 0, valorVendaCurso: 0 },
   );
+}
+
+// 09/10 (Paulo): filtro só com campanhas do Vitalício e ao menos uma de tráfego/carrinho DIRETO -> o funil ganha
+// "Clique no botão" (página vita-direto) antes do checkout.
+const ehVitalicio = (c: string) => /^(vit\b|vit 1409|fam[ií]lia ls|vital[ií]cio)/i.test(c.trim());
+function filtroVitalicioDireto(sel: string[]) {
+  return sel.length > 0 && sel.every(ehVitalicio) && sel.some((c) => /direto/i.test(c));
 }
 
 function Dashboard() {
@@ -631,6 +640,8 @@ function Dashboard() {
                   compras={agg.compras}
                   valorCompra={agg.valorCompra}
                   checkout={agg.initiateCheckout}
+                  cliqueBotao={filtroVitalicioDireto(cursosSelecionados) ? agg.cliqueBotao : undefined}
+                  chegouCheckout={agg.chegouCheckout}
                   leads={agg.leads}
                   showLeads={modo === "lead" || modo === "geral"}
                 />

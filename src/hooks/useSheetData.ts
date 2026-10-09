@@ -37,6 +37,9 @@ export interface AdRow {
   scroll75: number;
   scroll90: number;
   viuBotao: number;
+  /** Funil do Vitalício direto (página vita-direto), Meta — só existe desde 09/10/2026. */
+  cliqueBotao: number;
+  chegouCheckout: number;
   curso: string;
   angulo?: string;
   mecanismo?: string;
@@ -119,6 +122,8 @@ async function fetchSheet(): Promise<AdRow[]> {
         scroll75: num("Rolagem 75% - página do curso"),
         scroll90: num("Rolagem 90% - página do curso"),
         viuBotao: num("Viu o botão de compra - página do curso"),
+        cliqueBotao: num("Clique no botão de compra - página de vendas"),
+        chegouCheckout: num("Chegou ao checkout - página de vendas"),
         curso: r["Curso / Produto"] || "Sem categoria",
         angulo: analysis?.angulo || "",
         mecanismo: analysis?.mecanismo || "",

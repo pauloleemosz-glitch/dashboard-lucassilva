@@ -12,6 +12,10 @@ interface Props {
   checkout: number;
   leads?: number;
   showLeads?: boolean;
+  /** Clique no botão de compra da página de vendas (Vitalício direto). Undefined = etapa não aparece. */
+  cliqueBotao?: number;
+  /** Chegada ao checkout medida pela URL do checkout — substitui o Initiate Checkout quando há clique no botão. */
+  chegouCheckout?: number;
 }
 
 interface Stage {
@@ -31,7 +35,14 @@ export function ConversionFunnel({
   checkout,
   leads = 0,
   showLeads = false,
+  cliqueBotao,
+  chegouCheckout = 0,
 }: Props) {
+  // O Initiate Checkout da Meta soma o clique no botão da página e a chegada no checkout. Com o funil do
+  // Vitalício direto, a etapa de checkout passa a ser só a chegada no checkout (medida desde 09/10/2026).
+  const comBotao = cliqueBotao !== undefined;
+  const medido = comBotao && cliqueBotao + chegouCheckout > 0;
+  const checkoutReal = medido ? chegouCheckout : checkout;
   const stages: Stage[] = [
     { label: "Cliques", value: cliques, prev: null, color: "hsl(var(--neon-purple))", display: formatNumber(cliques) },
     { label: "Visitou Site", value: visitas, prev: cliques, color: "hsl(var(--neon-magenta))", display: formatNumber(visitas) },
@@ -40,6 +51,10 @@ export function ConversionFunnel({
     stages.push({ label: "Leads", value: leads, prev: visitas, color: "hsl(var(--neon-cyan))", display: formatNumber(leads) });
     stages.push({ label: "Initiate Checkout", value: checkout, prev: leads, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
     stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
+  } else if (comBotao) {
+    stages.push({ label: "Clique no botão", value: cliqueBotao, prev: visitas, color: "hsl(var(--neon-cyan))", display: formatNumber(cliqueBotao) });
+    stages.push({ label: "Checkout", value: checkoutReal, prev: cliqueBotao, color: "hsl(var(--neon-gold))", display: formatNumber(checkoutReal) });
+    stages.push({ label: "Compra", value: compras, prev: checkoutReal, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
   } else {
     stages.push({ label: "Initiate Checkout", value: checkout, prev: visitas, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
     stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
@@ -160,6 +175,7 @@ export function ConversionFunnel({
       </motion.div>
       <p className="mt-4 text-[10px] leading-snug text-muted-foreground/80 relative">
         Compra e valor de compra: {AVISO_META_7D}
+        {comBotao && " Clique no botão e checkout separados só a partir de 09/10/2026."}
       </p>
     </div>
   );
