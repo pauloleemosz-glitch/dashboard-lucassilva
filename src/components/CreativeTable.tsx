@@ -92,6 +92,9 @@ function aggregate(rows: AdRow[]): AggRow[] {
         cpaLead: null,
       });
     } else {
+      // O mesmo criativo pode rodar em campanhas diferentes (ex.: quente e frio): a linha soma tudo, então o rótulo lista todas.
+      const c = r.curso || "—";
+      if (!existing.curso.split(" + ").includes(c)) existing.curso += " + " + c;
       existing.leads += r.leads;
       existing.impressions += r.impressions;
       existing.videoPlays3s += r.videoPlays3s;
