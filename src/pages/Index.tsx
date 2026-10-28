@@ -603,11 +603,8 @@ function Dashboard() {
           {showMeta && (
           <>
           {/* Pesquisa dos leads da MA-0911: logo abaixo dos KPIs, só com o filtro só em MA-0911 */}
-          {soMA0911 && (
-            <Reveal direction="up">
-              <PesquisaMA0911 dados={pesquisaMA} />
-            </Reveal>
-          )}
+          {/* sem <Reveal>: o bloco é alto (>1 tela) e a animação de entrada podia deixá-lo transparente/embaçado */}
+          {soMA0911 && <PesquisaMA0911 dados={pesquisaMA} />}
 
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
