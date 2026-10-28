@@ -602,6 +602,13 @@ function Dashboard() {
 
           {showMeta && (
           <>
+          {/* Pesquisa dos leads da MA-0911: logo abaixo dos KPIs, só com o filtro só em MA-0911 */}
+          {soMA0911 && (
+            <Reveal direction="up">
+              <PesquisaMA0911 dados={pesquisaMA} />
+            </Reveal>
+          )}
+
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
@@ -656,12 +663,6 @@ function Dashboard() {
           {modo !== "lead" && (
             <Reveal direction="up">
               <ScrollDepth {...rolagem} />
-            </Reveal>
-          )}
-
-          {soMA0911 && (
-            <Reveal direction="up">
-              <PesquisaMA0911 dados={pesquisaMA} />
             </Reveal>
           )}
 
