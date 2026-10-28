@@ -1,0 +1,141 @@
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { formatNumber, formatPct } from "@/utils/parsers";
+import type { PesquisaMA0911 as Dados, PesquisaPublico } from "@/hooks/usePesquisaMA0911";
+
+const COR = { Quente: "hsl(var(--neon-cyan))", Frio: "hsl(var(--neon-magenta))" };
+
+const achar = (p: PesquisaPublico | undefined, trecho: string) =>
+  p?.perguntas.find((q) => q.pergunta.toLowerCase().includes(trecho.toLowerCase()));
+
+/** % de quem respondeu `resposta` (começo do texto) na pergunta que contém `trecho`. */
+function pct(p: PesquisaPublico | undefined, trecho: string, resposta: string) {
+  const q = achar(p, trecho);
+  if (!q || !p?.respostas) return null;
+  const n = q.respostas.filter((r) => r.resposta.toLowerCase().startsWith(resposta.toLowerCase())).reduce((s, r) => s + r.qtd, 0);
+  return (100 * n) / p.respostas;
+}
+
+const DESTAQUES: { rotulo: string; calc: (p?: PesquisaPublico) => number | null }[] = [
+  { rotulo: "Respostas ÷ inscritos do formulário*", calc: (p) => (p && p.inscritos ? (100 * p.respostas) / p.inscritos : null) },
+  { rotulo: "Têm cartão de crédito", calc: (p) => pct(p, "cartão", "Sim") },
+  { rotulo: "Não trabalham no mercado", calc: (p) => pct(p, "trabalha no mercado", "Não") },
+  { rotulo: "Sem nenhuma certificação", calc: (p) => pct(p, "certificação você possui", "Nenhuma") },
+  { rotulo: "Conheceram o Lucas há menos de 1 mês", calc: (p) => pct(p, "conhece o Lucas", "Eu conheci há menos") },
+  { rotulo: "Renda até R$ 2 mil ou sem renda", calc: (p) => {
+      const a = pct(p, "renda", "Atualmente não"), b = pct(p, "renda", "Até R$ 1.000"), c = pct(p, "renda", "De R$ 1.001");
+      return a === null ? null : (a || 0) + (b || 0) + (c || 0);
+    } },
+];
+
+const BLOCOS: { titulo: string; trecho: string }[] = [
+  { titulo: "O que mais preocupa", trecho: "preocupa" },
+  { titulo: "Objetivo para 2027", trecho: "objetivo" },
+  { titulo: "O que mais atrapalha", trecho: "impedi" },
+  { titulo: "Renda atual", trecho: "renda" },
+  { titulo: "Idade", trecho: "anos você tem" },
+  { titulo: "Onde conheceu o Lucas", trecho: "onde você conheceu" },
+];
+
+function Barra({ v, cor, ativo, i }: { v: number; cor: string; ativo: boolean; i: number }) {
+  return (
+    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+      <motion.div className="h-full rounded-full" style={{ background: cor, boxShadow: `0 0 10px ${cor}` }}
+        initial={{ width: 0 }} animate={{ width: ativo ? `${Math.min(100, v)}%` : 0 }}
+        transition={{ duration: 0.9, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }} />
+    </div>
+  );
+}
+
+/**
+ * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Só aparece quando o filtro de curso tem apenas MA-0911.
+ * Quente e frio têm pesquisas separadas (uma em cada página de obrigado); a porcentagem é sobre quem respondeu.
+ * Não depende do período escolhido: mostra todas as respostas até a última atualização (de hora em hora).
+ */
+export function PesquisaMA0911({ dados }: { dados: Dados | undefined }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const ativo = useInView(ref, { amount: 0.15 });
+  const Q = dados?.Quente, F = dados?.Frio;
+  if (!Q && !F) {
+    return (
+      <div className="glass-card rounded-xl p-5">
+        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
+        <p className="text-sm text-muted-foreground mt-3">Carregando as respostas da pesquisa…</p>
+      </div>
+    );
+  }
+  return (
+    <div ref={ref} className="glass-card rounded-xl p-5 relative overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
+        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
+        <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest">
+          {(["Quente", "Frio"] as const).map((k) => dados?.[k] && (
+            <span key={k} className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ background: COR[k] }} />
+              <span style={{ color: COR[k] }}>{k}</span>
+              <span className="text-muted-foreground">{formatNumber(dados[k]!.respostas)} respostas</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+        {DESTAQUES.map((d) => {
+          const q = d.calc(Q), f = d.calc(F);
+          return (
+            <div key={d.rotulo} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{d.rotulo}</div>
+              <div className="flex items-baseline gap-3 tabular-nums">
+                {q !== null && <span className="text-xl" style={{ color: COR.Quente }}>{formatPct(q, 0)}</span>}
+                {f !== null && <span className="text-sm" style={{ color: COR.Frio }}>{formatPct(f, 0)}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+        {BLOCOS.map((b) => {
+          const qq = achar(Q, b.trecho), ff = achar(F, b.trecho);
+          if (!qq && !ff) return null;
+          const nomes = [...new Set([...(qq?.respostas || []), ...(ff?.respostas || [])].map((r) => r.resposta))]
+            .filter((n) => n !== "Outros");
+          const v = (p: PesquisaPublico | undefined, n: string) => {
+            const r = achar(p, b.trecho)?.respostas.find((x) => x.resposta === n);
+            return p?.respostas ? (100 * (r?.qtd || 0)) / p.respostas : 0;
+          };
+          const linhas = nomes.map((n) => ({ n, q: v(Q, n), f: v(F, n) })).sort((a, c) => c.q - a.q).slice(0, 6);
+          return (
+            <div key={b.titulo} className="min-w-0">
+              <div className="text-[11px] uppercase tracking-widest text-neon-cyan/80 mb-2.5">{b.titulo}</div>
+              <div className="space-y-2">
+                {linhas.map((l, i) => (
+                  <div key={l.n} className="grid grid-cols-[minmax(0,1fr)_6.5rem] gap-3 items-center">
+                    <div className="min-w-0">
+                      <div className="text-xs truncate mb-1" title={l.n}>{l.n}</div>
+                      <div className="space-y-1">
+                        {Q && <Barra v={l.q} cor={COR.Quente} ativo={ativo} i={i} />}
+                        {F && <Barra v={l.f} cor={COR.Frio} ativo={ativo} i={i} />}
+                      </div>
+                    </div>
+                    <div className="text-right tabular-nums text-xs leading-5">
+                      {Q && <div style={{ color: COR.Quente }}>{formatPct(l.q, 0)}</div>}
+                      {F && <div style={{ color: COR.Frio }}>{formatPct(l.f, 0)}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] text-muted-foreground mt-5">
+        Porcentagem sobre quem respondeu, em cada público. Todas as respostas até {Q?.atualizado || F?.atualizado}, sem
+        relação com o período escolhido acima. "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
+        a mesma pessoa pode cair em mais de um. * A pesquisa do quente também recebe quem se inscreveu pela página da aula,
+        então essa proporção do quente fica acima da taxa real de resposta.
+      </p>
+    </div>
+  );
+}

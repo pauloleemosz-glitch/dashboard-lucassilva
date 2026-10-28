@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap, Landmark } from "lucide-react";
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
 import { ScrollDepth } from "@/components/ScrollDepth";
+import { PesquisaMA0911 } from "@/components/PesquisaMA0911";
+import { usePesquisaMA0911, filtroSoMA0911 } from "@/hooks/usePesquisaMA0911";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
@@ -63,6 +65,8 @@ function Dashboard() {
   const { data: googleData, isLoading: googleLoading, isFetching: googleFetching, refetch: googleRefetch } = useGoogleAdsData();
   const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, plataforma, angulosSel, mecanismosSel } = useFilters();
   const { data: fatRealData } = useFaturamentoReal();
+  const soMA0911 = filtroSoMA0911(cursosSelecionados);
+  const { data: pesquisaMA } = usePesquisaMA0911(soMA0911);
 
   const showMeta = plataforma !== "google";
   const showGoogle = plataforma !== "meta";
@@ -652,6 +656,12 @@ function Dashboard() {
           {modo !== "lead" && (
             <Reveal direction="up">
               <ScrollDepth {...rolagem} />
+            </Reveal>
+          )}
+
+          {soMA0911 && (
+            <Reveal direction="up">
+              <PesquisaMA0911 dados={pesquisaMA} />
             </Reveal>
           )}
 
