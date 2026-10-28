@@ -64,3 +64,13 @@ export function usePesquisaMA0911(ativo: boolean) {
 
 /** O bloco só aparece quando o filtro de curso tem SÓ campanhas da MA-0911 (quente, frio, testes). */
 export const filtroSoMA0911 = (cursos: string[]) => cursos.length > 0 && cursos.every((c) => c.startsWith("MA-0911"));
+
+/**
+ * Qual público da pesquisa acompanha o filtro: campanha com "Frios" no rótulo = frio; qualquer outra da MA-0911
+ * (quente, Higgsfield, vídeos das entregas) = quente. Os dois tipos marcados juntos = mostra os dois.
+ */
+export function publicosDoFiltro(cursos: string[]): Publico[] {
+  const frio = cursos.some((c) => /frio/i.test(c));
+  const quente = cursos.some((c) => !/frio/i.test(c));
+  return [...(quente ? (["Quente"] as Publico[]) : []), ...(frio ? (["Frio"] as Publico[]) : [])];
+}

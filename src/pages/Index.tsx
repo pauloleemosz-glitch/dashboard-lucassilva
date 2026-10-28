@@ -4,7 +4,7 @@ import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Per
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
 import { ScrollDepth } from "@/components/ScrollDepth";
 import { PesquisaMA0911 } from "@/components/PesquisaMA0911";
-import { usePesquisaMA0911, filtroSoMA0911 } from "@/hooks/usePesquisaMA0911";
+import { usePesquisaMA0911, filtroSoMA0911, publicosDoFiltro } from "@/hooks/usePesquisaMA0911";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
@@ -604,7 +604,7 @@ function Dashboard() {
           <>
           {/* Pesquisa dos leads da MA-0911: logo abaixo dos KPIs, só com o filtro só em MA-0911 */}
           {/* sem <Reveal>: o bloco é alto (>1 tela) e a animação de entrada podia deixá-lo transparente/embaçado */}
-          {soMA0911 && <PesquisaMA0911 dados={pesquisaMA} />}
+          {soMA0911 && <PesquisaMA0911 dados={pesquisaMA} publicos={publicosDoFiltro(cursosSelecionados)} />}
 
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

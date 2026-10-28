@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { formatNumber, formatPct } from "@/utils/parsers";
-import type { PesquisaMA0911 as Dados, PesquisaPublico } from "@/hooks/usePesquisaMA0911";
+import type { PesquisaMA0911 as Dados, PesquisaPublico, Publico } from "@/hooks/usePesquisaMA0911";
 
 const COR = { Quente: "hsl(var(--neon-cyan))", Frio: "hsl(var(--neon-magenta))" };
 
@@ -52,15 +52,17 @@ function Barra({ v, cor, ativo, i }: { v: number; cor: string; ativo: boolean; i
  * Quente e frio têm pesquisas separadas (uma em cada página de obrigado); a porcentagem é sobre quem respondeu.
  * Não depende do período escolhido: mostra todas as respostas até a última atualização (de hora em hora).
  */
-export function PesquisaMA0911({ dados }: { dados: Dados | undefined }) {
+/** `publicos` acompanha o filtro de campanha: só quente, só frio, ou os dois. */
+export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados: Dados | undefined; publicos?: Publico[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const ativo = useInView(ref, { amount: 0.15 });
-  const Q = dados?.Quente, F = dados?.Frio;
+  const Q = publicos.includes("Quente") ? dados?.Quente : undefined;
+  const F = publicos.includes("Frio") ? dados?.Frio : undefined;
   if (!Q && !F) {
     return (
       <div className="glass-card rounded-xl p-5">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
-        <p className="text-sm text-muted-foreground mt-3">Carregando as respostas da pesquisa…</p>
+        <p className="text-sm text-muted-foreground mt-3">{dados ? "Ainda sem respostas deste público." : "Carregando as respostas da pesquisa…"}</p>
       </div>
     );
   }
@@ -69,7 +71,7 @@ export function PesquisaMA0911({ dados }: { dados: Dados | undefined }) {
       <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
         <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest">
-          {(["Quente", "Frio"] as const).map((k) => dados?.[k] && (
+          {(["Quente", "Frio"] as const).filter((k) => publicos.includes(k)).map((k) => dados?.[k] && (
             <span key={k} className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full" style={{ background: COR[k] }} />
               <span style={{ color: COR[k] }}>{k}</span>
@@ -133,8 +135,7 @@ export function PesquisaMA0911({ dados }: { dados: Dados | undefined }) {
       <p className="text-[11px] text-muted-foreground mt-5">
         Porcentagem sobre quem respondeu, em cada público. Todas as respostas até {Q?.atualizado || F?.atualizado}, sem
         relação com o período escolhido acima. "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
-        a mesma pessoa pode cair em mais de um. * A pesquisa do quente também recebe quem se inscreveu pela página da aula,
-        então essa proporção do quente fica acima da taxa real de resposta.
+        a mesma pessoa pode cair em mais de um.{Q && " * A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
       </p>
     </div>
   );
