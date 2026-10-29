@@ -4,7 +4,7 @@ import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Per
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
 import { ScrollDepth } from "@/components/ScrollDepth";
 import { PesquisaMA0911 } from "@/components/PesquisaMA0911";
-import { usePesquisaMA0911, pesquisaNoPeriodo, lancamentoDoFiltro, publicosDoFiltro } from "@/hooks/usePesquisaMA0911";
+import { usePesquisaMA0911, pesquisaNoPeriodo, lancamentoDoFiltro, publicosDoFiltro, produtosDoFiltro } from "@/hooks/usePesquisaMA0911";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
@@ -68,9 +68,6 @@ function Dashboard() {
   // 29/10 (Paulo): pesquisa dos leads em qualquer lançamento que tenha pesquisa (filtro só com campanhas dele)
   const lancPesquisa = useMemo(() => lancamentoDoFiltro(cursosSelecionados), [cursosSelecionados]);
   const { data: pesquisaLinhas } = usePesquisaMA0911(!!lancPesquisa);
-  // 29/10 (Paulo): a pesquisa acompanha o filtro de datas (contagens por dia da resposta)
-  const pesquisaMA = useMemo(() => pesquisaNoPeriodo(pesquisaLinhas, lancPesquisa?.chave ?? null, dateRange?.from, dateRange?.to),
-    [pesquisaLinhas, lancPesquisa, dateRange]);
 
   const showMeta = plataforma !== "google";
   const showGoogle = plataforma !== "meta";
@@ -109,6 +106,13 @@ function Dashboard() {
     }
     return Array.from(set).sort();
   }, [allRows, dateRange]);
+
+  // 29/10 (Paulo): a pesquisa acompanha o filtro de datas (contagens por dia da resposta) e o de produto
+  // (só as respostas de quem se inscreveu pelas campanhas marcadas; todas marcadas = o lançamento inteiro)
+  const pesquisaProdutos = useMemo(() => produtosDoFiltro(cursosSelecionados, cursos, lancPesquisa),
+    [cursosSelecionados, cursos, lancPesquisa]);
+  const pesquisaMA = useMemo(() => pesquisaNoPeriodo(pesquisaLinhas, lancPesquisa?.chave ?? null, dateRange?.from, dateRange?.to, pesquisaProdutos),
+    [pesquisaLinhas, lancPesquisa, dateRange, pesquisaProdutos]);
 
   // Remove cursos selecionados que sumiram do período
   useEffect(() => {
@@ -608,7 +612,7 @@ function Dashboard() {
           <>
           {/* Pesquisa dos leads da MA-0911: logo abaixo dos KPIs, só com o filtro só em MA-0911 */}
           {/* sem <Reveal>: o bloco é alto (>1 tela) e a animação de entrada podia deixá-lo transparente/embaçado */}
-          {lancPesquisa && <PesquisaMA0911 dados={pesquisaMA} lancamento={lancPesquisa.nome} publicos={publicosDoFiltro(cursosSelecionados)} />}
+          {lancPesquisa && <PesquisaMA0911 dados={pesquisaMA} lancamento={lancPesquisa.nome} publicos={publicosDoFiltro(cursosSelecionados)} filtroProduto={!!pesquisaProdutos} />}
 
           {/* Charts + Funnel */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

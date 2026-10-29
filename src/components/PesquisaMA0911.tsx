@@ -60,16 +60,19 @@ function Barra({ v, cor, ativo, i }: { v: number; cor: string; ativo: boolean; i
  * Acompanha o período escolhido (dia em que a pessoa respondeu; atualiza de hora em hora).
  */
 /** `publicos` acompanha o filtro de campanha: só quente, só frio, ou os dois. */
-export function PesquisaMA0911({ dados, lancamento = "Missão ANBIMA 09/11", publicos = ["Quente", "Frio"] }: { dados: Dados | undefined; lancamento?: string; publicos?: Publico[] }) {
+/** `filtroProduto` (29/10): só parte das campanhas do lançamento está marcada no filtro. */
+export function PesquisaMA0911({ dados, lancamento = "Missão ANBIMA 09/11", publicos = ["Quente", "Frio"], filtroProduto = false }: { dados: Dados | undefined; lancamento?: string; publicos?: Publico[]; filtroProduto?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const ativo = useInView(ref, { amount: 0.15 });
   const Q = publicos.includes("Quente") ? dados?.Quente : undefined;
   const F = publicos.includes("Frio") ? dados?.Frio : undefined;
+  const separa = [Q, F].some((p) => p?.porCampanha);
+  const fora = (Q?.foraDoFiltro || 0) + (F?.foraDoFiltro || 0);
   if (!Q && !F) {
     return (
       <div className="glass-card rounded-xl p-5">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · {lancamento}</h3>
-        <p className="text-sm text-muted-foreground mt-3">{dados ? "Nenhuma resposta deste público no período escolhido." : "Carregando as respostas da pesquisa…"}</p>
+        <p className="text-sm text-muted-foreground mt-3">{!dados ? "Carregando as respostas da pesquisa…" : filtroProduto ? "Nenhum inscrito das campanhas escolhidas respondeu a pesquisa no período (campanha de venda ou de lembrete não gera inscrição)." : "Nenhuma resposta deste público no período escolhido."}</p>
       </div>
     );
   }
@@ -166,7 +169,10 @@ export function PesquisaMA0911({ dados, lancamento = "Missão ANBIMA 09/11", pub
         (atualizado em {Q?.atualizado || F?.atualizado}). "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
         a mesma pessoa pode cair em mais de um. A nota do lead vem do lead scoring dos lançamentos anteriores (no teste,
         7% dos leads A e B compraram, contra 2% a 3% dos C e D); a porcentagem dela é sobre quem foi pontuado, contando cada e-mail
-        uma vez só.{" * Respostas do período ÷ inscritos do formulário no mesmo período (quem se inscreve num dia pode responder no outro)."}{Q && " A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
+        uma vez só.{" * Respostas do período ÷ inscritos do formulário no mesmo período (quem se inscreve num dia pode responder no outro)."}
+        {filtroProduto && separa && ` Só as respostas de quem se inscreveu pelas campanhas marcadas no filtro (ligadas pelo e-mail ou telefone do formulário); ${formatNumber(fora)} respostas de outras campanhas ou sem campanha (página da aula, orgânico) ficaram fora.`}
+        {filtroProduto && !separa && " Este lançamento não separa a pesquisa por campanha (a Meta só guarda as inscrições dos últimos 90 dias): mostra o lançamento inteiro."}
+        {!filtroProduto && Q && " A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
       </p>
     </div>
   );

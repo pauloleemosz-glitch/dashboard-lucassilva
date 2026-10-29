@@ -18,11 +18,15 @@ export interface PesquisaPublico {
   /** Lead scoring (29/10): quantos respondentes caíram em cada faixa A/B/C/D no período. */
   faixas: Record<string, number>;
   perguntas: PesquisaPergunta[];
+  /** 29/10: o lançamento liga cada resposta à campanha do lead (linha `_meta / por campanha` na planilha). */
+  porCampanha: boolean;
+  /** Respostas do período que ficaram fora do filtro de produto (outras campanhas ou sem campanha). */
+  foraDoFiltro: number;
 }
 
 export type PesquisaMA0911 = Partial<Record<Publico, PesquisaPublico>>;
 
-interface Linha { lanc: string; pub: Publico; ordem: number; pergunta: string; resposta: string; qtd: number; dia: Date | null }
+interface Linha { lanc: string; pub: Publico; ordem: number; pergunta: string; resposta: string; qtd: number; dia: Date | null; prod: string }
 
 /**
  * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Aba "Pesquisa MA-0911" da planilha do dashboard,
@@ -45,23 +49,36 @@ async function fetchPesquisa(): Promise<Linha[]> {
       lanc: r["Lancamento"] || "MA-0911", pub, ordem: Number(r["Ordem"]) || 0, pergunta: r["Pergunta"], resposta: r["Resposta"],
       qtd: Number(String(r["Qtd"] || "0").replace(",", ".")) || 0,
       dia: m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null,
+      prod: (r["Produto"] || "").trim(),
     });
   }
   return out;
 }
 
-/** Soma as contagens dos dias dentro do período escolhido (sem período = tudo). */
-export function pesquisaNoPeriodo(linhas: Linha[] | undefined, lanc: string | null, de?: Date, ate?: Date): PesquisaMA0911 | undefined {
+/**
+ * Soma as contagens dos dias dentro do período escolhido (sem período = tudo).
+ * `produtos` (29/10): rótulos de campanha do filtro; só entram as respostas de quem se inscreveu por elas.
+ * null = o lançamento inteiro (inclui quem se inscreveu pela página ou sem campanha). Lançamento que não separa por
+ * campanha (inscrições antigas, a Meta só guarda 90 dias) ignora o filtro de produto.
+ */
+export function pesquisaNoPeriodo(linhas: Linha[] | undefined, lanc: string | null, de?: Date, ate?: Date,
+  produtos: string[] | null = null): PesquisaMA0911 | undefined {
   if (!linhas || !lanc) return undefined;
+  const separa = new Set(linhas.filter((r) => r.lanc === lanc && r.pergunta === "_meta" && r.resposta === "por campanha").map((r) => r.pub));
   const out: PesquisaMA0911 = {};
   for (const r of linhas) {
     if (r.lanc !== lanc) continue;
-    const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [], faixas: {} });
+    const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [], faixas: {}, porCampanha: separa.has(r.pub), foraDoFiltro: 0 });
     if (r.pergunta === "_meta" && r.resposta?.startsWith("atualizado")) {
       p.atualizado = r.resposta.replace("atualizado ", "");
       continue;
     }
+    if (r.pergunta === "_meta" && r.resposta === "por campanha") continue;
     if (r.dia && ((de && r.dia < de) || (ate && r.dia > ate))) continue;
+    if (produtos && p.porCampanha && !produtos.includes(r.prod)) {
+      if (r.pergunta === "_meta" && r.resposta === "respostas") p.foraDoFiltro += r.qtd;
+      continue;
+    }
     if (r.pergunta === "_score") {
       p.faixas[r.resposta] = (p.faixas[r.resposta] || 0) + r.qtd;
       continue;
@@ -121,6 +138,16 @@ export function lancamentoDoFiltro(cursos: string[]) {
   const ls = cursos.map((c) => LANCAMENTOS.find((l) => c.startsWith(l.prefixo)));
   const l = ls[0];
   return l && ls.every((x) => x === l) ? l : null;
+}
+
+/**
+ * 29/10 (Paulo): a pesquisa acompanha o produto do filtro. Todas as campanhas do lançamento que existem no período
+ * marcadas = o lançamento inteiro (null, entra também quem se inscreveu pela página); parte delas = só essas.
+ */
+export function produtosDoFiltro(cursos: string[], disponiveis: string[], lanc: { prefixo: string } | null): string[] | null {
+  if (!lanc) return null;
+  const doLanc = disponiveis.filter((c) => c.startsWith(lanc.prefixo));
+  return doLanc.every((c) => cursos.includes(c)) ? null : cursos;
 }
 
 /**
