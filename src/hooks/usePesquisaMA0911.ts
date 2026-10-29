@@ -15,6 +15,8 @@ export interface PesquisaPublico {
   respostas: number;
   inscritos: number;
   atualizado: string;
+  /** Lead scoring (29/10): quantos respondentes caíram em cada faixa A/B/C/D no período. */
+  faixas: Record<string, number>;
   perguntas: PesquisaPergunta[];
 }
 
@@ -53,12 +55,16 @@ export function pesquisaNoPeriodo(linhas: Linha[] | undefined, de?: Date, ate?: 
   if (!linhas) return undefined;
   const out: PesquisaMA0911 = {};
   for (const r of linhas) {
-    const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [] });
+    const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [], faixas: {} });
     if (r.pergunta === "_meta" && r.resposta?.startsWith("atualizado")) {
       p.atualizado = r.resposta.replace("atualizado ", "");
       continue;
     }
     if (r.dia && ((de && r.dia < de) || (ate && r.dia > ate))) continue;
+    if (r.pergunta === "_score") {
+      p.faixas[r.resposta] = (p.faixas[r.resposta] || 0) + r.qtd;
+      continue;
+    }
     if (r.pergunta === "_meta") {
       if (r.resposta === "respostas") p.respostas += r.qtd;
       else if (r.resposta === "inscritos no formulário") p.inscritos += r.qtd;

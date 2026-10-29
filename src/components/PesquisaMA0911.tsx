@@ -28,6 +28,12 @@ const DESTAQUES: { rotulo: string; calc: (p?: PesquisaPublico) => number | null 
     } },
 ];
 
+const NOTAS = [
+  { rotulo: "Nota A", faixas: ["A"] },
+  { rotulo: "Nota B", faixas: ["B"] },
+  { rotulo: "A + B (bem pontuados)", faixas: ["A", "B"] },
+];
+
 const BLOCOS: { titulo: string; trecho: string }[] = [
   { titulo: "O que mais preocupa", trecho: "preocupa" },
   { titulo: "Objetivo para 2027", trecho: "objetivo" },
@@ -79,6 +85,27 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
             </span>
           ))}
         </div>
+      </div>
+
+      {/* 29/10 (Paulo): nota do lead scoring — quantos tiraram A e B (a % é sobre quem foi pontuado no período) */}
+      <div className="text-[11px] uppercase tracking-widest text-neon-cyan/80 mb-2.5">Nota do lead (score)</div>
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {NOTAS.map((nota) => (
+          <div key={nota.rotulo} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{nota.rotulo}</div>
+            {([["Quente", Q], ["Frio", F]] as const).map(([k, p]) => {
+              if (!p) return null;
+              const total = Object.values(p.faixas).reduce((s, v) => s + v, 0);
+              const n = nota.faixas.reduce((s, f) => s + (p.faixas[f] || 0), 0);
+              return (
+                <div key={k} className="flex items-baseline gap-2 tabular-nums" style={{ color: COR[k] }}>
+                  <span className={k === "Quente" ? "text-xl" : "text-sm"}>{formatNumber(n)}</span>
+                  <span className="text-[11px] opacity-80">{total ? formatPct((100 * n) / total, 0) : "—"}</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
@@ -135,7 +162,9 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
       <p className="text-[11px] text-muted-foreground mt-5">
         Porcentagem sobre quem respondeu, em cada público, contando só as respostas enviadas no período escolhido acima
         (atualizado em {Q?.atualizado || F?.atualizado}). "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
-        a mesma pessoa pode cair em mais de um.{" * Respostas do período ÷ inscritos do formulário no mesmo período (quem se inscreve num dia pode responder no outro)."}{Q && " A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
+        a mesma pessoa pode cair em mais de um. A nota do lead vem do lead scoring dos lançamentos anteriores (no teste,
+        7% dos leads A e B compraram, contra 2% a 3% dos C e D); a porcentagem dela é sobre quem foi pontuado, contando cada e-mail
+        uma vez só.{" * Respostas do período ÷ inscritos do formulário no mesmo período (quem se inscreve num dia pode responder no outro)."}{Q && " A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
       </p>
     </div>
   );
