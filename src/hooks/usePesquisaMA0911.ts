@@ -22,7 +22,7 @@ export interface PesquisaPublico {
 
 export type PesquisaMA0911 = Partial<Record<Publico, PesquisaPublico>>;
 
-interface Linha { pub: Publico; ordem: number; pergunta: string; resposta: string; qtd: number; dia: Date | null }
+interface Linha { lanc: string; pub: Publico; ordem: number; pergunta: string; resposta: string; qtd: number; dia: Date | null }
 
 /**
  * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Aba "Pesquisa MA-0911" da planilha do dashboard,
@@ -42,7 +42,7 @@ async function fetchPesquisa(): Promise<Linha[]> {
     if (pub !== "Quente" && pub !== "Frio") continue;
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(r["Data"] || "");
     out.push({
-      pub, ordem: Number(r["Ordem"]) || 0, pergunta: r["Pergunta"], resposta: r["Resposta"],
+      lanc: r["Lancamento"] || "MA-0911", pub, ordem: Number(r["Ordem"]) || 0, pergunta: r["Pergunta"], resposta: r["Resposta"],
       qtd: Number(String(r["Qtd"] || "0").replace(",", ".")) || 0,
       dia: m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null,
     });
@@ -51,10 +51,11 @@ async function fetchPesquisa(): Promise<Linha[]> {
 }
 
 /** Soma as contagens dos dias dentro do período escolhido (sem período = tudo). */
-export function pesquisaNoPeriodo(linhas: Linha[] | undefined, de?: Date, ate?: Date): PesquisaMA0911 | undefined {
-  if (!linhas) return undefined;
+export function pesquisaNoPeriodo(linhas: Linha[] | undefined, lanc: string | null, de?: Date, ate?: Date): PesquisaMA0911 | undefined {
+  if (!linhas || !lanc) return undefined;
   const out: PesquisaMA0911 = {};
   for (const r of linhas) {
+    if (r.lanc !== lanc) continue;
     const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [], faixas: {} });
     if (r.pergunta === "_meta" && r.resposta?.startsWith("atualizado")) {
       p.atualizado = r.resposta.replace("atualizado ", "");
@@ -94,11 +95,36 @@ export function usePesquisaMA0911(ativo: boolean) {
   });
 }
 
-/** O bloco só aparece quando o filtro de curso tem SÓ campanhas da MA-0911 (quente, frio, testes). */
-export const filtroSoMA0911 = (cursos: string[]) => cursos.length > 0 && cursos.every((c) => c.startsWith("MA-0911"));
+/**
+ * 29/10 (Paulo): a pesquisa vale para os lançamentos anteriores também. Rótulo da campanha (começo) → lançamento
+ * (a mesma chave da coluna Lancamento que o pesquisa_ma0911/atualizar.py grava). Rótulo de carrinho, lembrete e
+ * vídeos do lançamento caem no mesmo lançamento.
+ */
+export const LANCAMENTOS: { prefixo: string; chave: string; nome: string }[] = [
+  { prefixo: "Família LS LS1201", chave: "Vitalício 12/01", nome: "Vitalício 12/01" },
+  { prefixo: "Formação CFP LS2704", chave: "CFP 27/04", nome: "CFP® 27/04" },
+  { prefixo: "MANBIMA 1105", chave: "Missão ANBIMA 11/05", nome: "Missão ANBIMA 11/05" },
+  { prefixo: "CNPI 2505", chave: "CNPI 25/05", nome: "CNPI 25/05" },
+  { prefixo: "CFP 0806", chave: "CFP 08/06", nome: "CFP® 08/06" },
+  { prefixo: "MCPA-0607", chave: "Missão CPA 06/07", nome: "Missão CPA 06/07" },
+  { prefixo: "CFP 2707", chave: "CFP 27/07", nome: "CFP® 27/07" },
+  { prefixo: "MA 1008", chave: "Missão ANBIMA 10/08", nome: "Missão ANBIMA 10/08" },
+  { prefixo: "VIT 1409", chave: "Vitalício 14/09", nome: "Vitalício 14/09" },
+  { prefixo: "MCPA-0510", chave: "Missão CPA 05/10", nome: "Missão CPA 05/10" },
+  { prefixo: "CFP-1910", chave: "CFP 19/10", nome: "CFP® 19/10" },
+  { prefixo: "MA-0911", chave: "MA-0911", nome: "Missão ANBIMA 09/11" },
+];
+
+/** O bloco só aparece quando TODAS as campanhas do filtro são do mesmo lançamento; devolve qual (ou null). */
+export function lancamentoDoFiltro(cursos: string[]) {
+  if (!cursos.length) return null;
+  const ls = cursos.map((c) => LANCAMENTOS.find((l) => c.startsWith(l.prefixo)));
+  const l = ls[0];
+  return l && ls.every((x) => x === l) ? l : null;
+}
 
 /**
- * Qual público da pesquisa acompanha o filtro: campanha com "Frios" no rótulo = frio; qualquer outra da MA-0911
+ * Qual público da pesquisa acompanha o filtro: campanha com "Frios" no rótulo = frio; qualquer outra do lançamento
  * (quente, Higgsfield, vídeos das entregas) = quente. Os dois tipos marcados juntos = mostra os dois.
  */
 export function publicosDoFiltro(cursos: string[]): Publico[] {

@@ -54,12 +54,13 @@ function Barra({ v, cor, ativo, i }: { v: number; cor: string; ativo: boolean; i
 }
 
 /**
- * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Só aparece quando o filtro de curso tem apenas MA-0911.
+ * Pesquisa dos leads de um lançamento (28/10/2026, MA-0911; 29/10, todos com pesquisa). Só aparece quando o filtro
+ * de curso tem apenas campanhas daquele lançamento.
  * Quente e frio têm pesquisas separadas (uma em cada página de obrigado); a porcentagem é sobre quem respondeu.
  * Acompanha o período escolhido (dia em que a pessoa respondeu; atualiza de hora em hora).
  */
 /** `publicos` acompanha o filtro de campanha: só quente, só frio, ou os dois. */
-export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados: Dados | undefined; publicos?: Publico[] }) {
+export function PesquisaMA0911({ dados, lancamento = "Missão ANBIMA 09/11", publicos = ["Quente", "Frio"] }: { dados: Dados | undefined; lancamento?: string; publicos?: Publico[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const ativo = useInView(ref, { amount: 0.15 });
   const Q = publicos.includes("Quente") ? dados?.Quente : undefined;
@@ -67,7 +68,7 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
   if (!Q && !F) {
     return (
       <div className="glass-card rounded-xl p-5">
-        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
+        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · {lancamento}</h3>
         <p className="text-sm text-muted-foreground mt-3">{dados ? "Nenhuma resposta deste público no período escolhido." : "Carregando as respostas da pesquisa…"}</p>
       </div>
     );
@@ -75,7 +76,7 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
   return (
     <div ref={ref} className="glass-card rounded-xl p-5 relative overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
+        <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · {lancamento}</h3>
         <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest">
           {(["Quente", "Frio"] as const).filter((k) => publicos.includes(k)).map((k) => dados?.[k] && (
             <span key={k} className="flex items-center gap-1.5">
@@ -111,6 +112,7 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         {DESTAQUES.map((d) => {
           const q = d.calc(Q), f = d.calc(F);
+          if (q === null && f === null) return null;   // pesquisa daquele lançamento não tinha essa pergunta
           return (
             <div key={d.rotulo} className="rounded-lg bg-white/[0.03] border border-white/5 p-3 min-w-0">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">{d.rotulo}</div>
