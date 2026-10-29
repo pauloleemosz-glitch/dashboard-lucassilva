@@ -4,7 +4,7 @@ import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Per
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
 import { ScrollDepth } from "@/components/ScrollDepth";
 import { PesquisaMA0911 } from "@/components/PesquisaMA0911";
-import { usePesquisaMA0911, filtroSoMA0911, publicosDoFiltro } from "@/hooks/usePesquisaMA0911";
+import { usePesquisaMA0911, pesquisaNoPeriodo, filtroSoMA0911, publicosDoFiltro } from "@/hooks/usePesquisaMA0911";
 import { useSheetData, AdRow } from "@/hooks/useSheetData";
 import { useFaturamentoReal, grupoDoRotulo } from "@/hooks/useFaturamentoReal";
 import { FilterProvider, useFilters } from "@/context/FilterContext";
@@ -66,7 +66,10 @@ function Dashboard() {
   const { dateRange, setDateRange, cursos: cursosSelecionados, setCursos, modo, plataforma, angulosSel, mecanismosSel } = useFilters();
   const { data: fatRealData } = useFaturamentoReal();
   const soMA0911 = filtroSoMA0911(cursosSelecionados);
-  const { data: pesquisaMA } = usePesquisaMA0911(soMA0911);
+  const { data: pesquisaLinhas } = usePesquisaMA0911(soMA0911);
+  // 29/10 (Paulo): a pesquisa acompanha o filtro de datas (contagens por dia da resposta)
+  const pesquisaMA = useMemo(() => pesquisaNoPeriodo(pesquisaLinhas, dateRange?.from, dateRange?.to),
+    [pesquisaLinhas, dateRange]);
 
   const showMeta = plataforma !== "google";
   const showGoogle = plataforma !== "meta";

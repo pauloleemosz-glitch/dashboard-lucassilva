@@ -20,41 +20,67 @@ export interface PesquisaPublico {
 
 export type PesquisaMA0911 = Partial<Record<Publico, PesquisaPublico>>;
 
+interface Linha { pub: Publico; ordem: number; pergunta: string; resposta: string; qtd: number; dia: Date | null }
+
 /**
  * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Aba "Pesquisa MA-0911" da planilha do dashboard,
  * gravada de hora em hora por pesquisa_ma0911/atualizar.py: só contagens agregadas, nenhum dado pessoal.
+ * Desde 29/10 cada contagem vem POR DIA (coluna Data, dia da resposta) e o bloco acompanha o filtro de datas.
  */
-async function fetchPesquisa(): Promise<PesquisaMA0911> {
+async function fetchPesquisa(): Promise<Linha[]> {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent("Pesquisa MA-0911")}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Erro ao carregar a pesquisa (${res.status})`);
   const parsed = Papa.parse<Record<string, string>>(await res.text(), { header: true, skipEmptyLines: true });
   // o gviz devolve a PRIMEIRA aba quando a pedida não existe: confere o cabeçalho
-  if (!parsed.meta.fields?.includes("Pergunta")) return {};
-  const out: PesquisaMA0911 = {};
+  if (!parsed.meta.fields?.includes("Pergunta")) return [];
+  const out: Linha[] = [];
   for (const r of parsed.data) {
     const pub = r["Publico"] as Publico;
     if (pub !== "Quente" && pub !== "Frio") continue;
-    const p = (out[pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [] });
-    const qtd = Number(String(r["Qtd"] || "0").replace(",", ".")) || 0;
-    if (r["Pergunta"] === "_meta") {
-      if (r["Resposta"] === "respostas") p.respostas = qtd;
-      else if (r["Resposta"] === "inscritos no formulário") p.inscritos = qtd;
-      else if (r["Resposta"]?.startsWith("atualizado")) p.atualizado = r["Resposta"].replace("atualizado ", "");
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(r["Data"] || "");
+    out.push({
+      pub, ordem: Number(r["Ordem"]) || 0, pergunta: r["Pergunta"], resposta: r["Resposta"],
+      qtd: Number(String(r["Qtd"] || "0").replace(",", ".")) || 0,
+      dia: m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null,
+    });
+  }
+  return out;
+}
+
+/** Soma as contagens dos dias dentro do período escolhido (sem período = tudo). */
+export function pesquisaNoPeriodo(linhas: Linha[] | undefined, de?: Date, ate?: Date): PesquisaMA0911 | undefined {
+  if (!linhas) return undefined;
+  const out: PesquisaMA0911 = {};
+  for (const r of linhas) {
+    const p = (out[r.pub] ??= { respostas: 0, inscritos: 0, atualizado: "", perguntas: [] });
+    if (r.pergunta === "_meta" && r.resposta?.startsWith("atualizado")) {
+      p.atualizado = r.resposta.replace("atualizado ", "");
       continue;
     }
-    const ordem = Number(r["Ordem"]) || 0;
-    let q = p.perguntas.find((x) => x.ordem === ordem);
-    if (!q) p.perguntas.push((q = { ordem, pergunta: r["Pergunta"], respostas: [] }));
-    q.respostas.push({ resposta: r["Resposta"], qtd });
+    if (r.dia && ((de && r.dia < de) || (ate && r.dia > ate))) continue;
+    if (r.pergunta === "_meta") {
+      if (r.resposta === "respostas") p.respostas += r.qtd;
+      else if (r.resposta === "inscritos no formulário") p.inscritos += r.qtd;
+      continue;
+    }
+    let q = p.perguntas.find((x) => x.ordem === r.ordem);
+    if (!q) p.perguntas.push((q = { ordem: r.ordem, pergunta: r.pergunta, respostas: [] }));
+    const a = q.respostas.find((x) => x.resposta === r.resposta);
+    if (a) a.qtd += r.qtd;
+    else q.respostas.push({ resposta: r.resposta, qtd: r.qtd });
   }
-  for (const p of Object.values(out)) p?.perguntas.sort((a, b) => a.ordem - b.ordem);
+  for (const k of Object.keys(out) as Publico[]) {
+    const p = out[k]!;
+    if (!p.respostas) delete out[k];   // ninguém desse público respondeu no período
+    else p.perguntas.sort((a, b) => a.ordem - b.ordem);
+  }
   return out;
 }
 
 export function usePesquisaMA0911(ativo: boolean) {
   return useQuery({
-    queryKey: ["pesquisa-ma0911", SHEET_ID],
+    queryKey: ["pesquisa-ma0911-dia", SHEET_ID],
     queryFn: fetchPesquisa,
     enabled: ativo,
     refetchInterval: 10 * 60 * 1000,

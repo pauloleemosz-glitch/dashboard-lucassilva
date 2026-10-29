@@ -50,7 +50,7 @@ function Barra({ v, cor, ativo, i }: { v: number; cor: string; ativo: boolean; i
 /**
  * Pesquisa dos leads da Missão ANBIMA 09/11 (28/10/2026). Só aparece quando o filtro de curso tem apenas MA-0911.
  * Quente e frio têm pesquisas separadas (uma em cada página de obrigado); a porcentagem é sobre quem respondeu.
- * Não depende do período escolhido: mostra todas as respostas até a última atualização (de hora em hora).
+ * Acompanha o período escolhido (dia em que a pessoa respondeu; atualiza de hora em hora).
  */
 /** `publicos` acompanha o filtro de campanha: só quente, só frio, ou os dois. */
 export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados: Dados | undefined; publicos?: Publico[] }) {
@@ -62,7 +62,7 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
     return (
       <div className="glass-card rounded-xl p-5">
         <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Pesquisa dos leads · Missão ANBIMA 09/11</h3>
-        <p className="text-sm text-muted-foreground mt-3">{dados ? "Ainda sem respostas deste público." : "Carregando as respostas da pesquisa…"}</p>
+        <p className="text-sm text-muted-foreground mt-3">{dados ? "Nenhuma resposta deste público no período escolhido." : "Carregando as respostas da pesquisa…"}</p>
       </div>
     );
   }
@@ -133,9 +133,9 @@ export function PesquisaMA0911({ dados, publicos = ["Quente", "Frio"] }: { dados
       </div>
 
       <p className="text-[11px] text-muted-foreground mt-5">
-        Porcentagem sobre quem respondeu, em cada público. Todas as respostas até {Q?.atualizado || F?.atualizado}, sem
-        relação com o período escolhido acima. "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
-        a mesma pessoa pode cair em mais de um.{Q && " * A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
+        Porcentagem sobre quem respondeu, em cada público, contando só as respostas enviadas no período escolhido acima
+        (atualizado em {Q?.atualizado || F?.atualizado}). "Objetivo" e "O que mais atrapalha" são respostas abertas agrupadas por tema;
+        a mesma pessoa pode cair em mais de um.{" * Respostas do período ÷ inscritos do formulário no mesmo período (quem se inscreve num dia pode responder no outro)."}{Q && " A pesquisa do quente também recebe quem se inscreveu pela página da aula, então essa proporção do quente fica acima da taxa real de resposta."}
       </p>
     </div>
   );
