@@ -6,6 +6,7 @@ import { ctr as ctrFn, hookRate as hookRateFn, cpm as cpmFn, cpaPerpetuo, cpaLan
 import { formatBRL, formatNumber, formatPct, extractDriveId } from "@/utils/parsers";
 import { cn } from "@/lib/utils";
 import { AVISO_META_7D } from "@/utils/atribuicao";
+import { ehCampanhaDeConversa, conversasDaLinha, custoPorConversa } from "@/utils/conversas";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 const ANGULO_COLORS: Record<string, string> = {
@@ -57,6 +58,9 @@ interface AggRow {
   compras: number;
   cpaCompra: number | null;
   cpaLead: number | null;
+  conversas: number;
+  gastoConversas: number;
+  custoConversa: number | null;
 }
 
 type SortKey = keyof Omit<AggRow, "link" | "driveId" | "curso">;
@@ -90,6 +94,9 @@ function aggregate(rows: AdRow[]): AggRow[] {
         compras: r.compras,
         cpaCompra: null,
         cpaLead: null,
+        conversas: conversasDaLinha(r),
+        gastoConversas: ehCampanhaDeConversa(r) ? r.spend : 0,
+        custoConversa: null,
       });
     } else {
       // O mesmo criativo pode rodar em campanhas diferentes (ex.: quente e frio): a linha soma tudo, então o rótulo lista todas.
@@ -104,6 +111,8 @@ function aggregate(rows: AdRow[]): AggRow[] {
       existing.spend += r.spend;
       existing.valorConversao += r.valorCompra;
       existing.compras += r.compras;
+      existing.conversas += conversasDaLinha(r);
+      existing.gastoConversas += ehCampanhaDeConversa(r) ? r.spend : 0;
     }
   }
   for (const v of map.values()) {
@@ -112,11 +121,12 @@ function aggregate(rows: AdRow[]): AggRow[] {
     v.cpm = cpmFn(v.spend, v.impressions);
     v.cpaCompra = cpaPerpetuo(v.spend, v.compras);
     v.cpaLead = cpaLancamento(v.spend, v.leads);
+    v.custoConversa = custoPorConversa(v.gastoConversas, v.conversas);
   }
   return Array.from(map.values());
 }
 
-export function CreativeTable({ rows }: { rows: AdRow[] }) {
+export function CreativeTable({ rows, conversas = false }: { rows: AdRow[]; conversas?: boolean }) {
   const [sortKey, setSortKey] = useState<SortKey>("impressions");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
@@ -158,6 +168,10 @@ export function CreativeTable({ rows }: { rows: AdRow[] }) {
   };
 
   const cols: { key: SortKey; label: string; format: (v: any) => string }[] = [
+    ...(conversas ? [
+      { key: "conversas" as SortKey, label: "Conversas", format: (v: any) => formatNumber(v) },
+      { key: "custoConversa" as SortKey, label: "Custo / Conversa", format: (v: any) => formatBRL(v) },
+    ] : []),
     { key: "leads", label: "Leads", format: (v) => formatNumber(v) },
     { key: "cpaLead", label: "Custo / Lead", format: (v) => formatBRL(v) },
     { key: "impressions", label: "Impressões", format: (v) => formatNumber(v) },

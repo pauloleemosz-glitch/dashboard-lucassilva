@@ -16,6 +16,8 @@ interface Props {
   cliqueBotao?: number;
   /** Chegada ao checkout medida pela URL do checkout — substitui o Initiate Checkout quando há clique no botão. */
   chegouCheckout?: number;
+  /** Campanha de conversa (WhatsApp): definido = o funil vira Cliques > Conversas iniciadas, sem página nem compra. */
+  conversas?: number;
 }
 
 interface Stage {
@@ -37,6 +39,7 @@ export function ConversionFunnel({
   showLeads = false,
   cliqueBotao,
   chegouCheckout = 0,
+  conversas,
 }: Props) {
   // O Initiate Checkout da Meta soma o clique no botão da página e a chegada no checkout. Com o funil do
   // Vitalício direto, a etapa de checkout passa a ser só a chegada no checkout (medida desde 09/10/2026).
@@ -47,7 +50,10 @@ export function ConversionFunnel({
     { label: "Cliques", value: cliques, prev: null, color: "hsl(var(--neon-purple))", display: formatNumber(cliques) },
     { label: "Visitou Site", value: visitas, prev: cliques, color: "hsl(var(--neon-magenta))", display: formatNumber(visitas) },
   ];
-  if (showLeads) {
+  if (conversas !== undefined) {
+    stages.length = 1;
+    stages.push({ label: "Conversas iniciadas", value: conversas, prev: cliques, color: "hsl(var(--neon-cyan))", display: formatNumber(conversas) });
+  } else if (showLeads) {
     stages.push({ label: "Leads", value: leads, prev: visitas, color: "hsl(var(--neon-cyan))", display: formatNumber(leads) });
     stages.push({ label: "Initiate Checkout", value: checkout, prev: leads, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
     stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
@@ -59,7 +65,7 @@ export function ConversionFunnel({
     stages.push({ label: "Initiate Checkout", value: checkout, prev: visitas, color: "hsl(var(--neon-gold))", display: formatNumber(checkout) });
     stages.push({ label: "Compra", value: compras, prev: checkout, color: "hsl(var(--neon-orange))", display: formatNumber(compras) });
   }
-  stages.push({
+  if (conversas === undefined) stages.push({
     label: "Valor de Compra",
     value: valorCompra,
     prev: null,

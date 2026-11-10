@@ -9,9 +9,11 @@ interface Point {
   cpl: number | null;
 }
 
-export function LeadsSpendCPA({ data }: { data: Point[] }) {
+/** titulo/rotulo/rotuloCusto trocam o texto quando a série carrega outra coisa que não lead (ex.: conversas iniciadas). */
+export function LeadsSpendCPA({ data, titulo = "Captação de Leads no período · Leads × Gasto × CPA", rotulo = "Leads", rotuloCusto = "CPA (Lead)" }:
+  { data: Point[]; titulo?: string; rotulo?: string; rotuloCusto?: string }) {
   return (
-    <ChartCard title="Captação de Leads no período · Leads × Gasto × CPA" delay={0.3}>
+    <ChartCard title={titulo} delay={0.3}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid stroke="hsl(var(--neon-cyan))" strokeOpacity={0.1} vertical={false} />
@@ -23,8 +25,8 @@ export function LeadsSpendCPA({ data }: { data: Point[] }) {
           />
           <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
           <Line yAxisId="left" type="monotone" dataKey="spend" name="Gasto" stroke="hsl(var(--neon-cyan))" strokeWidth={2} dot={false} />
-          <Line yAxisId="right" type="monotone" dataKey="leads" name="Leads" stroke="hsl(var(--neon-purple))" strokeWidth={2} dot={false} />
-          <Line yAxisId="left" type="monotone" dataKey="cpl" name="CPA (Lead)" stroke="hsl(var(--neon-orange))" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+          <Line yAxisId="right" type="monotone" dataKey="leads" name={rotulo} stroke="hsl(var(--neon-purple))" strokeWidth={2} dot={false} />
+          <Line yAxisId="left" type="monotone" dataKey="cpl" name={rotuloCusto} stroke="hsl(var(--neon-orange))" strokeWidth={2} strokeDasharray="4 4" dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap, Landmark } from "lucide-react";
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp, BarChart3, Percent, Target, AlertCircle, UserPlus, FileText, MousePointerClick, Zap, GraduationCap, Landmark, MessageCircle } from "lucide-react";
 import { AVISO_META_7D_CURTO, VENDA_CURSO_DESDE, ROLAGEM_DESDE, cursoRolagem } from "@/utils/atribuicao";
+import { ehCampanhaDeConversa, conversasDaLinha, custoPorConversa } from "@/utils/conversas";
 import { ScrollDepth } from "@/components/ScrollDepth";
 import { PesquisaMA0911 } from "@/components/PesquisaMA0911";
 import { usePesquisaMA0911, pesquisaNoPeriodo, lancamentoDoFiltro, publicosDoFiltro, produtosDoFiltro } from "@/hooks/usePesquisaMA0911";
@@ -47,9 +48,14 @@ function aggregate(rows: AdRow[]) {
       acc.chegouCheckout += r.chegouCheckout || 0;
       acc.vendaCurso += r.vendaCurso;
       acc.valorVendaCurso += r.valorVendaCurso;
+      if (ehCampanhaDeConversa(r)) {
+        acc.conversas += r.conversations || 0;
+        acc.gastoConversas += r.spend;
+        acc.cliquesConversas += r.clicks;
+      }
       return acc;
     },
-    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0, cliqueBotao: 0, chegouCheckout: 0, vendaCurso: 0, valorVendaCurso: 0 },
+    { spend: 0, impressions: 0, clicks: 0, compras: 0, leads: 0, reach: 0, landingPageViews: 0, valorCompra: 0, valorCheckout: 0, initiateCheckout: 0, cliqueBotao: 0, chegouCheckout: 0, vendaCurso: 0, valorVendaCurso: 0, conversas: 0, gastoConversas: 0, cliquesConversas: 0 },
   );
 }
 
@@ -213,6 +219,21 @@ function Dashboard() {
     return aggGoogle(googleAll.ads.filter((r) => r.date && r.date >= prevFrom && r.date <= prevTo));
   }, [googleAll, dateRange]);
 
+  // 10/11 (Paulo): produto com objetivo de CONVERSA INICIADA (WhatsApp) ganha o KPI de conversas quando entra no filtro.
+  // soConversas = o filtro só tem produto de conversa: aí lead, venda e página saem de cena e a conversa vira o resultado.
+  const produtosDeConversa = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rowsForOptions) if (r.curso && ehCampanhaDeConversa(r)) set.add(r.curso);
+    return set;
+  }, [rowsForOptions]);
+  const temConversas = cursosSelecionados.some((c) => produtosDeConversa.has(c));
+  const soConversas = temConversas && filtered.length > 0 && filtered.every(ehCampanhaDeConversa);
+  const custoConversa = custoPorConversa(agg.gastoConversas, agg.conversas);
+  const custoConversaPrev = custoPorConversa(prevAgg.gastoConversas, prevAgg.conversas);
+  const notaConversas = agg.cliquesConversas > 0
+    ? `${formatPct((agg.conversas / agg.cliquesConversas) * 100)} dos cliques viraram conversa${soConversas ? "" : " · só campanhas de conversa (WhatsApp)"}`
+    : "Só campanhas com objetivo de conversa (WhatsApp)";
+
   const cpaCurrent = modo === "lead" ? cpaLancamento(agg.spend, agg.leads) : cpaPerpetuo(agg.spend, agg.compras);
   const cpaPrev = modo === "lead" ? cpaLancamento(prevAgg.spend, prevAgg.leads) : cpaPerpetuo(prevAgg.spend, prevAgg.compras);
 
@@ -297,11 +318,13 @@ function Dashboard() {
 
   // Daily series
   const daily = useMemo(() => {
-    const map = new Map<string, { date: string; raw: Date; spend: number; clicks: number; impressions: number; reach: number; purchases: number; leads: number; lpViews: number }>();
+    const map = new Map<string, { date: string; raw: Date; spend: number; clicks: number; impressions: number; reach: number; purchases: number; leads: number; lpViews: number; conversas: number; gastoConversas: number }>();
     for (const r of filtered) {
       if (!r.date) continue;
       const k = format(r.date, "yyyy-MM-dd");
-      const e = map.get(k) || { date: format(r.date, "dd/MM"), raw: r.date, spend: 0, clicks: 0, impressions: 0, reach: 0, purchases: 0, leads: 0, lpViews: 0 };
+      const e = map.get(k) || { date: format(r.date, "dd/MM"), raw: r.date, spend: 0, clicks: 0, impressions: 0, reach: 0, purchases: 0, leads: 0, lpViews: 0, conversas: 0, gastoConversas: 0 };
+      e.conversas += conversasDaLinha(r);
+      if (ehCampanhaDeConversa(r)) e.gastoConversas += r.spend;
       e.spend += r.spend;
       e.clicks += r.clicks;
       e.impressions += r.impressions;
@@ -331,6 +354,13 @@ function Dashboard() {
     spend: Number(d.spend.toFixed(2)),
     leads: d.leads,
     cpl: d.leads > 0 ? Number((d.spend / d.leads).toFixed(2)) : null,
+  }));
+  // mesmo formato do gráfico de leads: a série "leads" aqui carrega as conversas iniciadas (gasto só das campanhas de conversa)
+  const conversasSpendData = daily.map((d) => ({
+    date: d.date,
+    spend: Number(d.gastoConversas.toFixed(2)),
+    leads: d.conversas,
+    cpl: d.conversas > 0 ? Number((d.gastoConversas / d.conversas).toFixed(2)) : null,
   }));
   const lpClicksLeadsData = daily.map((d) => ({
     date: d.date,
@@ -464,10 +494,29 @@ function Dashboard() {
                 <KPICard label="Faturamento real (vendas)" value={fatReal.valor} variation={fatReal.anterior !== null ? variacaoPct(fatReal.valor, fatReal.anterior) : null} icon={Landmark} color="gold" format={(v) => formatBRL(v)} delay={0.4}
                   nota={notaFatReal} />
               )}
+              {temConversas && (
+                <>
+                  <KPICard label="Conversas iniciadas" value={agg.conversas} variation={variacaoPct(agg.conversas, prevAgg.conversas)} icon={MessageCircle} color="orange" delay={0.42} nota={notaConversas} />
+                  <KPICard label="Custo por conversa" value={custoConversa} variation={variacaoPct(custoConversa, custoConversaPrev)} icon={Target} color="orange" format={(v) => formatBRL(v)} delay={0.44}
+                    nota="Gasto das campanhas de conversa ÷ conversas iniciadas" />
+                </>
+              )}
             </CombinedKpis>
           )}
           {plataforma === "google" && <GoogleKpis agg={gAgg} prev={gPrevAgg} />}
-          {plataforma === "meta" && (
+          {plataforma === "meta" && soConversas && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
+            <KPICard label="Impressões" value={agg.impressions} variation={variacaoPct(agg.impressions, prevAgg.impressions)} icon={Eye} color="purple" delay={0.05} />
+            <KPICard label="Cliques" value={agg.clicks} variation={variacaoPct(agg.clicks, prevAgg.clicks)} icon={MousePointer} color="cyan" delay={0.1} />
+            <KPICard label="Conversas iniciadas" value={agg.conversas} variation={variacaoPct(agg.conversas, prevAgg.conversas)} icon={MessageCircle} color="orange" delay={0.15} nota={notaConversas} />
+            <KPICard label="CPC" value={cpcCurrent} variation={variacaoPct(cpcCurrent, cpcPrev)} icon={MousePointer} color="purple" format={(v) => formatBRL(v)} delay={0.2} />
+            <KPICard label="CPM" value={cpmCurrent} variation={variacaoPct(cpmCurrent, cpmPrev)} icon={BarChart3} color="cyan" format={(v) => formatBRL(v)} delay={0.25} />
+            <KPICard label="CTR" value={ctrCurrent} variation={variacaoPct(ctrCurrent, ctrPrev)} icon={Percent} color="gold" format={(v) => formatPct(v)} delay={0.3} />
+            <KPICard label="Custo por conversa" value={custoConversa} variation={variacaoPct(custoConversa, custoConversaPrev)} icon={Target} color="orange" format={(v) => formatBRL(v)} delay={0.35} />
+          </div>
+          )}
+          {plataforma === "meta" && !soConversas && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPICard label="Investimento" value={agg.spend} variation={variacaoPct(agg.spend, prevAgg.spend)} icon={DollarSign} color="cyan" format={(v) => formatBRL(v)} delay={0} />
             {modo !== "lead" && (
@@ -507,10 +556,17 @@ function Dashboard() {
               delay={0.35}
               nota={modo === "lead" ? undefined : AVISO_META_7D_CURTO}
             />
+            {temConversas && (
+              <>
+                <KPICard label="Conversas iniciadas" value={agg.conversas} variation={variacaoPct(agg.conversas, prevAgg.conversas)} icon={MessageCircle} color="orange" delay={0.38} nota={notaConversas} />
+                <KPICard label="Custo por conversa" value={custoConversa} variation={variacaoPct(custoConversa, custoConversaPrev)} icon={Target} color="orange" format={(v) => formatBRL(v)} delay={0.4}
+                  nota="Gasto das campanhas de conversa ÷ conversas iniciadas" />
+              </>
+            )}
           </div>
           )}
 
-          {plataforma === "meta" && modo === "lead" && (
+          {plataforma === "meta" && modo === "lead" && !soConversas && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KPICard
                 label="Visualizações da Página"
@@ -559,7 +615,7 @@ function Dashboard() {
             </div>
           )}
 
-          {plataforma === "meta" && modo === "perpetuo" && (
+          {plataforma === "meta" && modo === "perpetuo" && !soConversas && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <KPICard
                 label="Visualizações da Página"
@@ -625,19 +681,26 @@ function Dashboard() {
                   <ReachFrequency data={reachFreqData} />
                 </Reveal>
                 <Reveal direction="right" delay={0.1}>
-                  {modo === "lead" ? (
+                  {soConversas ? (
+                    <LeadsSpendCPA data={conversasSpendData} titulo="Conversas no período · Conversas × Gasto × Custo" rotulo="Conversas" rotuloCusto="Custo por conversa" />
+                  ) : modo === "lead" ? (
                     <LeadsSpendCPA data={leadsSpendData} />
                   ) : (
                     <SpendPurchasesCPA data={spendPurchData} />
                   )}
                 </Reveal>
               </div>
-              {modo === "lead" && (
+              {temConversas && !soConversas && (
+                <Reveal direction="up">
+                  <LeadsSpendCPA data={conversasSpendData} titulo="Conversas no período · Conversas × Gasto × Custo" rotulo="Conversas" rotuloCusto="Custo por conversa" />
+                </Reveal>
+              )}
+              {modo === "lead" && !soConversas && (
                 <Reveal direction="up">
                   <LPViewsClicksLeads data={lpClicksLeadsData} />
                 </Reveal>
               )}
-              {modo === "geral" && (
+              {modo === "geral" && !soConversas && (
                 <>
                   <Reveal direction="up">
                     <LeadsSpendCPA data={leadsSpendData} />
@@ -660,6 +723,7 @@ function Dashboard() {
                   chegouCheckout={agg.chegouCheckout}
                   leads={agg.leads}
                   showLeads={modo === "lead" || modo === "geral"}
+                  conversas={soConversas ? agg.conversas : undefined}
                 />
               </Reveal>
             </div>
@@ -703,7 +767,7 @@ function Dashboard() {
 
           {/* Creatives table */}
           <Reveal direction="up" amount={0.1}>
-            <CreativeTable rows={filtered} />
+            <CreativeTable rows={filtered} conversas={temConversas} />
           </Reveal>
           </>
           )}
